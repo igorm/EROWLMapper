@@ -1,2 +1,6 @@
 # EROWLMapper
-Mapping ER schemas to OWL ontologies code examples
+
+This sample Java code illustrates an approach to mapping ER schemas to OWL ontologies
+presented in [I. Myroshnichenko and M. Murphy, Mapping ER Schemas to OWL Ontologies,
+IEEE Sixth International Conference on Semantic Computing, Berkeley, CA, 2009]
+(https://www.computer.org/csdl/proceedings/icsc/2009/3800/00/3800a324-abs.html).
