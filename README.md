@@ -4,3 +4,5 @@ This sample Java code illustrates an approach to automatically mapping ER schema
 presented in [I. Myroshnichenko and M. Murphy, Mapping ER Schemas to OWL Ontologies, IEEE Sixth International Conference on Semantic Computing, Berkeley, CA, 2009](https://www.computer.org/csdl/proceedings/icsc/2009/3800/00/3800a324-abs.html).
 
 The bulk of the mapping logic is located in [domain/logic/mapper/OWLMapper](src/edu/sfsu/ertools/domain/logic/mapper/OWLMapper.java).
+
+You may also be interested in an overview of the [ER Model](http://myrosh.com/er-model-overview) and the [OWL Web Ontology Language](http://myrosh.com/owl-web-ontology-language-overview).
