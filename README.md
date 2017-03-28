@@ -55,7 +55,7 @@ Output OWL ontologies are serialized using [Apache Jena](https://jena.apache.org
 EROWLMapper is using [Apache Maven](https://maven.apache.org). You can package and run the application as follows:
 
 ```
-mvn package exec:java -Dexec.mainClass="com.myrosh.erowl.App" -Dexec.args="in_er_schema.yml out_ontology.owl" -q
+mvn package exec:java -Dexec.mainClass="com.myrosh.erowl.App" -Dexec.args="er_person_car.yml person_car.owl"
 ```
 
 
