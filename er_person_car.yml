@@ -1,0 +1,31 @@
+--- # Person-Car ER Schema
+entities:
+    -
+        name: Person
+        attributes:
+            -
+                name: ssn
+                key: true
+            -
+                name: name
+    -
+        name: Car
+        attributes:
+            -
+                name: vin
+                key: true
+            -
+                name: make
+            -
+                name: model
+relationships:
+    -
+        name: Drives
+        participatingEntities:
+            -
+                name: Person
+                role: Driver
+            -
+                name: Car
+                role: Vehicle
+                min: 1
