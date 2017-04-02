@@ -17,6 +17,11 @@ public class Relationship {
     private String name;
 
     /**
+     * Identifying flag
+     */
+    private boolean identifying = false;
+
+    /**
      * Participating entity objects
      */
     private List<ParticipatingEntity> participatingEntities = new ArrayList<ParticipatingEntity>();
@@ -25,32 +30,6 @@ public class Relationship {
      * Attribute objects
      */
     private List<Attribute> attributes = new ArrayList<Attribute>();
-
-    /**
-     * @param name
-     * @return
-     */
-    public ParticipatingEntity getParticipatingEntity(String name) {
-        for (ParticipatingEntity participatingEntity : participatingEntities) {
-            if (participatingEntity.getName().equals(name))
-                return participatingEntity;
-        }
-        return null;
-    }
-
-    /**
-     * @param attribute
-     */
-    public void addAttribute(Attribute attribute) {
-        attributes.add(attribute);
-    }
-
-    /**
-     * @param participatingEntity
-     */
-    public void addParticipatingEntity(ParticipatingEntity participatingEntity) {
-        participatingEntities.add(participatingEntity);
-    }
 
     /**
      * @return
@@ -69,8 +48,43 @@ public class Relationship {
     /**
      * @return
      */
+    public boolean isIdentifying() {
+        return identifying;
+    }
+
+    /**
+     * @param identifying
+     */
+    public void setIdentifying(boolean identifying) {
+        this.identifying = identifying;
+    }
+
+    /**
+     * @return
+     */
     public List<ParticipatingEntity> getParticipatingEntities() {
         return participatingEntities;
+    }
+
+    /**
+     * @param name
+     * @return
+     */
+    public ParticipatingEntity getParticipatingEntity(String name) {
+        for (ParticipatingEntity participatingEntity : participatingEntities) {
+            if (participatingEntity.getName().equals(name)) {
+                return participatingEntity;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param participatingEntity
+     */
+    public void addParticipatingEntity(ParticipatingEntity participatingEntity) {
+        participatingEntities.add(participatingEntity);
     }
 
     /**
@@ -78,5 +92,12 @@ public class Relationship {
      */
     public List<Attribute> getAttributes() {
         return attributes;
+    }
+
+    /**
+     * @param attribute
+     */
+    public void addAttribute(Attribute attribute) {
+        attributes.add(attribute);
     }
 }

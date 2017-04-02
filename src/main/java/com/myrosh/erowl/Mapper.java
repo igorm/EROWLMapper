@@ -1,5 +1,10 @@
 package com.myrosh.erowl;
 
+import java.util.HashSet;
+import java.util.Set;
+import java.util.List;
+import java.util.ArrayList;
+
 import org.apache.commons.lang3.StringUtils;
 
 import org.apache.jena.ontology.DatatypeProperty;
@@ -14,6 +19,7 @@ import com.myrosh.erowl.er.schema.Entity;
 import com.myrosh.erowl.er.schema.ParticipatingEntity;
 import com.myrosh.erowl.er.schema.Relationship;
 import com.myrosh.erowl.er.schema.Schema;
+import com.myrosh.erowl.er.InconsistentSchemaException;
 
 /**
  * @author igorm
@@ -29,26 +35,44 @@ public class Mapper {
     public static final String NS = "http://www.semanticweb.org/ontologies/erowl#";
 
     /**
+     * ER schema
+     */
+    private Schema schema;
+
+    /**
+     * OWL Ontology
+     */
+    private OntModel model;
+
+    /**
+     * Mapped entity names
+     */
+    // private Set<String> mappedEntityNames = new HashSet<String>();
+
+    /**
+     * Mapped relationship names
+     */
+    // private Set<String> mappedRelationshipNames = new HashSet<String>();
+
+    /**
      * @param schema
      * @return
-     * @throws Exception
+     * @throws InconsistentSchemaException
      */
     public OntModel map(Schema schema) throws Exception {
-        OntModel model = ModelFactory.createOntologyModel();
+        this.schema = schema;
+        model = ModelFactory.createOntologyModel();
 
-        mapStrongEntities(schema, model);
-        mapWeakEntities(schema, model);
-        mapBinaryRelationshipsWithoutAttributes(schema, model);
-        mapBinaryRelationshipsWithAttributes(schema, model);
-        mapTernaryRelationships(schema, model);
+        mapStrongEntities();
+        mapWeakEntities();
+        mapBinaryRelationshipsWithoutAttributes();
+        mapBinaryRelationshipsWithAttributes();
+        mapTernaryRelationships();
 
         return model;
     }
 
     /**
-     * @param schema
-     * @param model
-     *
      * Mapping Rule 1. Map each entity into a class. Map each simple attribute into a functional
      * datatype property. Map each multi-valued attribute into a datatype property (in OWL simple
      * nonfunctional datatype and object properties are multivalued by default). Map each composite
@@ -60,53 +84,88 @@ public class Mapper {
      * a functional inverse-functional object property whose range is set to the newly created
      * class with min cardinality set to one.
      */
-    private void mapStrongEntities(Schema schema, OntModel model) {
-        for (Entity entity : schema.getEntities()) {
-            if (!entity.isWeak()) {
-                OntClass entityClass = model.createClass(NS + entity.getName());
-
-                for (Attribute attribute : entity.getAttributes()) {
-                    if (attribute.isKey()) {
-                        // Map the key to a functional datatypeproperty with mincardinality 1
-                        DatatypeProperty keyAttributeProperty = model.createDatatypeProperty(
-                            NS + attribute.getName(), true);
-                        keyAttributeProperty.addDomain(entityClass);
-                        keyAttributeProperty.addRange(XSD.xstring);
-                        entityClass.addSuperClass(model.createMinCardinalityRestriction(
-                            null, keyAttributeProperty, 1));
-                    } else if (attribute.isComposite()) {
-                        // Map a composite attribute to a class with corresponding attributes
-                        String compositeAttributeClassName = entity.getName()
-                            + StringUtils.capitalize(attribute.getName());
-                        OntClass compositeAttributeClass = model.createClass(
-                            NS + compositeAttributeClassName);
-
-                        for (Attribute componentAttribute : attribute.getComponentAttributes()) {
-                            DatatypeProperty componentAttributeProperty = model.createDatatypeProperty(
-                                NS + componentAttribute.getName(), true);
-                            componentAttributeProperty.addDomain(compositeAttributeClass);
-                            componentAttributeProperty.addRange(XSD.xstring);
-                        }
-
-                        ObjectProperty hasCompositeAttributeProperty = model.createObjectProperty(
-                            NS + "has" + compositeAttributeClassName, true);
-                        hasCompositeAttributeProperty.addDomain(entityClass);
-                        hasCompositeAttributeProperty.addRange(compositeAttributeClass);
-                    } else {
-                        DatatypeProperty simpleAttributeProperty = model.createDatatypeProperty(
-                            NS + attribute.getName(), true);
-                        simpleAttributeProperty.addDomain(entityClass);
-                        simpleAttributeProperty.addRange(XSD.xstring);
-                    }
-                }
-            }
+    private void mapStrongEntities() {
+        for (Entity entity : schema.getStrongEntities()) {
+            mapEntity(entity);
         }
     }
 
+    private OntClass mapEntity(Entity entity) {
+        // Entity
+        String entityClassName = StringUtils.capitalize(entity.getName());
+        OntClass entityClass = model.createClass(NS + entityClassName);
+
+        // Key attributes
+        List<Attribute> keyAttributes = entity.getKeyAttributes();
+
+        if (!keyAttributes.isEmpty()) {
+            if (keyAttributes.size() == 1) {
+                // Map the key attribute to a functional datatypeproperty with mincardinality 1
+                addDatatypeProperty(
+                    StringUtils.capitalize(keyAttributes.get(0).getName()),
+                    entityClass,
+                    true,
+                    true
+                );
+            } else {
+                // Map key attributes to a separate class with corresponding functional
+                // datatypeproperties with mincardinality 1
+                String keyAttributeClassName = entityClassName + "Key";
+                OntClass keyAttributeClass = model.createClass(NS + keyAttributeClassName);
+
+                addHasAndIsOfObjectProperties(
+                    keyAttributeClassName, entityClass, keyAttributeClass, true, true);
+
+                for (Attribute keyAttribute : keyAttributes) {
+                    addDatatypeProperty(
+                        StringUtils.capitalize(keyAttribute.getName()),
+                        keyAttributeClass,
+                        true,
+                        true
+                    );
+                }
+            }
+        }
+
+        // Composite attributes
+        for (Attribute compositeAttribute : entity.getCompositeAttributes()) {
+            // Map a composite attribute to a class with corresponding properties
+            String compositeAttributeClassName =
+                entityClassName + StringUtils.capitalize(compositeAttribute.getName());
+            OntClass compositeAttributeClass = model.createClass(NS + compositeAttributeClassName);
+
+            addHasAndIsOfObjectProperties(
+                compositeAttributeClassName,
+                entityClass,
+                compositeAttributeClass,
+                !compositeAttribute.isMultivalued(),
+                false
+            );
+
+            for (Attribute componentAttribute : compositeAttribute.getComponentAttributes()) {
+                addDatatypeProperty(
+                    StringUtils.capitalize(componentAttribute.getName()),
+                    compositeAttributeClass,
+                    !componentAttribute.isMultivalued(),
+                    false
+                );
+            }
+        }
+
+        // Simple attributes
+        for (Attribute simpleAttribute : entity.getSimpleAttributes()) {
+            addDatatypeProperty(
+                StringUtils.capitalize(simpleAttribute.getName()),
+                entityClass,
+                !simpleAttribute.isMultivalued(),
+                false
+            );
+        }
+
+        return entityClass;
+    }
+
     /**
-     * @param schema
-     * @param model
-     *
      * Mapping Rule 2. Map each weak entity into a class with a functional object property whose
      * range is set to the owner class, min cardinality set to one and an object property in the
      * owner class with range set to the weak entity class. The object properties should be inverses
@@ -119,11 +178,11 @@ public class Mapper {
      * property whose range is set to the newly created class and whose min cardinality is set
      * to one.
      */
-    private void mapWeakEntities(Schema schema, OntModel model) {
+    private void mapWeakEntities() throws Exception {
         for (Entity entity : schema.getEntities()) {
             if (entity.isWeak()) {
                 // Create the classes: owner, weak, weakkey
-                OntClass ownerEntityClass = model.getOntClass(NS + entity.getOwner());
+                OntClass ownerEntityClass = model.getOntClass(NS + entity.getOwnerName());
                 OntClass weakEntityClass = model.createClass(NS + entity.getName());
                 OntClass weakEntityKeyClass = model.createClass(NS + entity.getName() + "Key");
 
@@ -133,9 +192,17 @@ public class Mapper {
                 hasWeakEntityProperty.addDomain(ownerEntityClass);
                 hasWeakEntityProperty.addRange(weakEntityClass);
 
-                Relationship relationship = schema.getRelationship(entity.getOwner(), entity.getName());
+                Relationship relationship = schema.getIdentifyingRelationship(
+                    entity.getOwnerName(), entity.getName());
+
+                if (relationship == null) {
+                    throw new Exception("Inconsistent schema: there is no identifying relationship"
+                        + " between strong entity " + entity.getOwnerName()
+                        + " and weak entity " + entity.getName() + ".");
+                }
+
                 ParticipatingEntity ownerParticipatingEntity =
-                    relationship.getParticipatingEntity(entity.getOwner());
+                    relationship.getParticipatingEntity(entity.getOwnerName());
 
                 if (ownerParticipatingEntity.getMin() == 1) {
                     ownerEntityClass.addSuperClass(
@@ -158,7 +225,7 @@ public class Mapper {
 
                 // Create the weakkey-to-owner functional objectproperty with mincardinality 1
                 ObjectProperty hasOwnerEntityProperty = model.createObjectProperty(
-                    NS + "has" + entity.getOwner(), true);
+                    NS + "has" + entity.getOwnerName(), true);
                 hasOwnerEntityProperty.addDomain(weakEntityKeyClass);
                 hasOwnerEntityProperty.addRange(ownerEntityClass);
                 weakEntityKeyClass.addSuperClass(
@@ -201,9 +268,6 @@ public class Mapper {
     }
 
     /**
-     * @param schema
-     * @param model
-     *
      * Mapping Rule 3. Map each binary relationship without attributes into a pair of object
      * properties in the two classes corresponding to the two participating entities. Map
      * participating entities’ cardinality into min and max cardinality restrictions or combine
@@ -212,7 +276,7 @@ public class Mapper {
      * TODO Update this method not to map identifying relationships which have already been
      * processed during weak entities' mapping.
      */
-    private void mapBinaryRelationshipsWithoutAttributes(Schema schema, OntModel model) {
+    private void mapBinaryRelationshipsWithoutAttributes() {
         for (Relationship relationship : schema.getRelationships()) {
             if (relationship.getParticipatingEntities().size() == 2
                 && relationship.getAttributes().isEmpty()
@@ -261,9 +325,6 @@ public class Mapper {
     }
 
     /**
-     * @param schema
-     * @param model
-     *
      * Mapping Rule 4. Map each binary relationship with attributes into a class with datatype
      * properties corresponding to the relationship attributes and two pairs of inverse object
      * properties between participating entity classes and the relationship class. Map participating
@@ -272,7 +333,7 @@ public class Mapper {
      * from participating entity classes to the relationship class. For their inverse object
      * properties, min and max cardinality should be set to one.
      */
-    private void mapBinaryRelationshipsWithAttributes(Schema schema, OntModel model) {
+    private void mapBinaryRelationshipsWithAttributes() {
         for (Relationship relationship : schema.getRelationships()) {
             if (relationship.getParticipatingEntities().size() == 2
                 && !relationship.getAttributes().isEmpty()
@@ -352,9 +413,6 @@ public class Mapper {
     }
 
     /**
-     * @param schema
-     * @param model
-     *
      * Mapping Rule 5. Map each ternary relationship into a class with three pairs of inverse
      * object properties between participating entity classes and the relationship class. Map
      * participating entities’ cardinality into min and max cardinality restrictions or combine
@@ -362,7 +420,7 @@ public class Mapper {
      * properties pointing from participating entity classes to the relationship class. For their
      * inverse object properties, min and max cardinality should be set to one.
      */
-    private void mapTernaryRelationships(Schema schema, OntModel model) {
+    private void mapTernaryRelationships() {
         for (Relationship relationship : schema.getRelationships()) {
             if (relationship.getParticipatingEntities().size() == 3) {
                 ParticipatingEntity firstParticipatingEntity = relationship.getParticipatingEntities().get(0);
@@ -456,5 +514,60 @@ public class Mapper {
                 isRelationshipOfThirdEntityProperty.addInverseOf(thirdEntityHasRelationshipsProperty);
             }
         }
+    }
+
+    private List<ObjectProperty> addHasAndIsOfObjectProperties(
+        String basename,
+        OntClass hasDomainClass,
+        OntClass isOfDomainClass,
+        boolean isFunctional,
+        boolean isMinCardinalityOne
+    ) {
+        ObjectProperty hasProperty = model.createObjectProperty(
+            NS + "has" + basename, isFunctional);
+        hasProperty.addDomain(hasDomainClass);
+        hasProperty.addRange(isOfDomainClass);
+
+        if (isMinCardinalityOne) {
+            hasDomainClass.addSubClass(
+                model.createMinCardinalityRestriction(null, hasProperty, 1));
+        }
+
+        String isOfPropertyURI = NS + "is" + basename + "Of";
+        ObjectProperty isOfProperty = isFunctional
+            ? model.createInverseFunctionalProperty(isOfPropertyURI, true)
+            : model.createObjectProperty(isOfPropertyURI, false);
+        isOfProperty.addDomain(isOfDomainClass);
+        isOfProperty.addRange(hasDomainClass);
+        isOfProperty.addInverseOf(hasProperty);
+
+        if (isMinCardinalityOne) {
+            isOfDomainClass.addSubClass(
+                model.createMinCardinalityRestriction(null, isOfProperty, 1));
+        }
+
+        List<ObjectProperty> properties = new ArrayList<ObjectProperty>();
+        properties.add(hasProperty);
+        properties.add(isOfProperty);
+
+        return properties;
+    }
+
+    private DatatypeProperty addDatatypeProperty(
+        String basename,
+        OntClass domainClass,
+        boolean isFunctional,
+        boolean isMinCardinalityOne
+    ) {
+        DatatypeProperty property = model.createDatatypeProperty(
+            NS + "has" + basename, isFunctional);
+        property.addDomain(domainClass);
+        property.addRange(XSD.xstring);
+
+        if (isMinCardinalityOne) {
+            domainClass.addSubClass(model.createMinCardinalityRestriction(null, property, 1));
+        }
+
+        return property;
     }
 }

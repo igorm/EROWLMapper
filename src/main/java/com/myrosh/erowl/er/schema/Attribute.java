@@ -17,9 +17,19 @@ public class Attribute {
     private String name;
 
     /**
-     * Key
+     * Key flag
      */
     private boolean key = false;
+
+    /**
+     * Composite flag
+     */
+    private boolean composite = false;
+
+    /**
+     * Multivalued flag
+     */
+    private boolean multivalued = false;
 
     /**
      * Component attribute objects
@@ -29,15 +39,15 @@ public class Attribute {
     /**
      * @return
      */
-    public boolean isComposite() {
-        return !componentAttributes.isEmpty();
+    public String getName() {
+        return name;
     }
 
     /**
-     * @param attribute
+     * @param name
      */
-    public void addComponentAttribute(Attribute attribute) {
-        componentAttributes.add(attribute);
+    public void setName(String name) {
+        this.name = name;
     }
 
     /**
@@ -57,15 +67,29 @@ public class Attribute {
     /**
      * @return
      */
-    public String getName() {
-        return name;
+    public boolean isComposite() {
+        return composite;
     }
 
     /**
-     * @param name
+     * @param composite
      */
-    public void setName(String name) {
-        this.name = name;
+    public void setComposite(boolean composite) {
+        this.composite = composite;
+    }
+
+    /**
+     * @return
+     */
+    public boolean isMultivalued() {
+        return multivalued;
+    }
+
+    /**
+     * @param multivalued
+     */
+    public void setMultivalued(boolean multivalued) {
+        this.multivalued = multivalued;
     }
 
     /**
@@ -73,5 +97,12 @@ public class Attribute {
      */
     public List<Attribute> getComponentAttributes() {
         return componentAttributes;
+    }
+
+    /**
+     * @param attribute
+     */
+    public void addComponentAttribute(Attribute attribute) {
+        componentAttributes.add(attribute);
     }
 }

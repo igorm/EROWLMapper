@@ -24,7 +24,10 @@ public class App
 
         try {
             Schema schema = parser.parse(new FileReader(args[0]));
+            schema.validate();
+
             OntModel model = mapper.map(schema);
+
             model.write(new PrintWriter(args[1], "UTF-8"), "RDF/XML-ABBREV");
         } catch (Exception e) {
             e.printStackTrace();

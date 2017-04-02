@@ -3,6 +3,8 @@ package com.myrosh.erowl.er.schema;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
+
 /**
  * @author igorm
  *
@@ -24,19 +26,12 @@ public class Entity {
     /**
      * Owner name
      */
-    private String owner;
+    private String ownerName;
 
     /**
      * Attribute objects
      */
     private List<Attribute> attributes = new ArrayList<Attribute>();
-
-    /**
-     * @param attribute
-     */
-    public void addAttribute(Attribute attribute) {
-        attributes.add(attribute);
-    }
 
     /**
      * @return
@@ -69,6 +64,20 @@ public class Entity {
     /**
      * @return
      */
+    public String getOwnerName() {
+        return ownerName;
+    }
+
+    /**
+     * @param ownerName
+     */
+    public void setOwnerName(String ownerName) {
+        this.ownerName = ownerName;
+    }
+
+    /**
+     * @return
+     */
     public List<Attribute> getAttributes() {
         return attributes;
     }
@@ -76,14 +85,52 @@ public class Entity {
     /**
      * @return
      */
-    public String getOwner() {
-        return owner;
+    public List<Attribute> getKeyAttributes() {
+        List<Attribute> keyAttributes = new ArrayList<Attribute>();
+
+        for (Attribute attribute : attributes) {
+            if (attribute.isKey()) {
+                keyAttributes.add(attribute);
+            }
+        }
+
+        return keyAttributes;
     }
 
     /**
-     * @param owner
+     * @return
      */
-    public void setOwner(String owner) {
-        this.owner = owner;
+    public List<Attribute> getCompositeAttributes() {
+        List<Attribute> compositeAttributes = new ArrayList<Attribute>();
+
+        for (Attribute attribute : attributes) {
+            if (attribute.isComposite()) {
+                compositeAttributes.add(attribute);
+            }
+        }
+
+        return compositeAttributes;
+    }
+
+    /**
+     * @return
+     */
+    public List<Attribute> getSimpleAttributes() {
+        List<Attribute> simpleAttributes = new ArrayList<Attribute>();
+
+        for (Attribute attribute : attributes) {
+            if (!attribute.isKey() && !attribute.isComposite()) {
+                simpleAttributes.add(attribute);
+            }
+        }
+
+        return simpleAttributes;
+    }
+
+    /**
+     * @param attribute
+     */
+    public void addAttribute(Attribute attribute) {
+        attributes.add(attribute);
     }
 }
