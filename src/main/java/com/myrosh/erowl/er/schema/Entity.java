@@ -100,31 +100,16 @@ public class Entity {
     /**
      * @return
      */
-    public List<Attribute> getCompositeAttributes() {
-        List<Attribute> compositeAttributes = new ArrayList<Attribute>();
+    public List<Attribute> getNonKeyAttributes() {
+        List<Attribute> nonKeyAttributes = new ArrayList<Attribute>();
 
         for (Attribute attribute : attributes) {
-            if (attribute.isComposite()) {
-                compositeAttributes.add(attribute);
+            if (!attribute.isKey()) {
+                nonKeyAttributes.add(attribute);
             }
         }
 
-        return compositeAttributes;
-    }
-
-    /**
-     * @return
-     */
-    public List<Attribute> getSimpleAttributes() {
-        List<Attribute> simpleAttributes = new ArrayList<Attribute>();
-
-        for (Attribute attribute : attributes) {
-            if (!attribute.isKey() && !attribute.isComposite()) {
-                simpleAttributes.add(attribute);
-            }
-        }
-
-        return simpleAttributes;
+        return nonKeyAttributes;
     }
 
     /**

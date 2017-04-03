@@ -73,12 +73,14 @@ public class Mapper {
     }
 
     /**
-     * Mapping Rule 1. Map each entity into a class. Map each simple attribute into a functional
-     * datatype property. Map each multi-valued attribute into a datatype property (in OWL simple
-     * nonfunctional datatype and object properties are multivalued by default). Map each composite
-     * attribute into a separate class with functional datatype properties corresponding to the
-     * composite attribute’s components; add a functional object property with range set to the
-     * newly created class. Map each simple key attribute into a functional datatype property with
+     * Mapping Rule 1.
+     *
+     * Map each entity into a class.
+     * Map each simple attribute into a functional datatype property.
+     * Map each multivalued attribute into a datatype property.
+     * Map each composite attribute into a separate class with functional datatype properties
+     * corresponding to the composite attribute’s components; add a functional object property with
+     * range set to the newly created class. Map each simple key attribute into a functional datatype property with
      * min cardinality set to one. Map each composite key attribute into a separate class with
      * functional datatype properties corresponding to the composite primary key’s components; add
      * a functional inverse-functional object property whose range is set to the newly created
@@ -91,75 +93,91 @@ public class Mapper {
     }
 
     private OntClass mapEntity(Entity entity) {
-        // Entity
+        // Map the entity
         String entityClassName = StringUtils.capitalize(entity.getName());
         OntClass entityClass = model.createClass(NS + entityClassName);
 
-        // Key attributes
+        // Map key attributes
         List<Attribute> keyAttributes = entity.getKeyAttributes();
+        String keyAttributeClassName = entityClassName + "Key";
 
-        if (!keyAttributes.isEmpty()) {
-            if (keyAttributes.size() == 1) {
-                // Map the key attribute to a functional datatypeproperty with mincardinality 1
-                addDatatypeProperty(
-                    StringUtils.capitalize(keyAttributes.get(0).getName()),
-                    entityClass,
-                    true,
-                    true
-                );
-            } else {
-                // Map key attributes to a separate class with corresponding functional
-                // datatypeproperties with mincardinality 1
-                String keyAttributeClassName = entityClassName + "Key";
+        if (keyAttributes.size() == 1) {
+            Attribute keyAttribute = keyAttributes.get(0);
+
+            if (keyAttribute.isComposite()) {
                 OntClass keyAttributeClass = model.createClass(NS + keyAttributeClassName);
 
                 addHasAndIsOfObjectProperties(
                     keyAttributeClassName, entityClass, keyAttributeClass, true, true);
 
-                for (Attribute keyAttribute : keyAttributes) {
+                for (Attribute componentAttribute : keyAttribute.getComponentAttributes()) {
                     addDatatypeProperty(
-                        StringUtils.capitalize(keyAttribute.getName()),
+                        StringUtils.capitalize(componentAttribute.getName()),
                         keyAttributeClass,
                         true,
                         true
                     );
                 }
+            } else {
+                // Map the key attribute to a functional datatypeproperty with mincardinality 1
+                addDatatypeProperty(
+                    StringUtils.capitalize(keyAttribute.getName()),
+                    entityClass,
+                    true,
+                    true
+                );
             }
-        }
-
-        // Composite attributes
-        for (Attribute compositeAttribute : entity.getCompositeAttributes()) {
-            // Map a composite attribute to a class with corresponding properties
-            String compositeAttributeClassName =
-                entityClassName + StringUtils.capitalize(compositeAttribute.getName());
-            OntClass compositeAttributeClass = model.createClass(NS + compositeAttributeClassName);
+        } else if (keyAttributes.size() > 1) {
+            // Map key attributes to a separate class with corresponding functional
+            // datatypeproperties with mincardinality 1
+            OntClass keyAttributeClass = model.createClass(NS + keyAttributeClassName);
 
             addHasAndIsOfObjectProperties(
-                compositeAttributeClassName,
-                entityClass,
-                compositeAttributeClass,
-                !compositeAttribute.isMultivalued(),
-                false
-            );
+                keyAttributeClassName, entityClass, keyAttributeClass, true, true);
 
-            for (Attribute componentAttribute : compositeAttribute.getComponentAttributes()) {
+            for (Attribute keyAttribute : keyAttributes) {
                 addDatatypeProperty(
-                    StringUtils.capitalize(componentAttribute.getName()),
-                    compositeAttributeClass,
-                    !componentAttribute.isMultivalued(),
-                    false
+                    StringUtils.capitalize(keyAttribute.getName()),
+                    keyAttributeClass,
+                    true,
+                    true
                 );
             }
         }
 
-        // Simple attributes
-        for (Attribute simpleAttribute : entity.getSimpleAttributes()) {
-            addDatatypeProperty(
-                StringUtils.capitalize(simpleAttribute.getName()),
-                entityClass,
-                !simpleAttribute.isMultivalued(),
-                false
-            );
+        for (Attribute nonKeyAttribute : entity.getNonKeyAttributes()) {
+            if (nonKeyAttribute.isComposite()) {
+                // Map a composite attribute to a class with corresponding properties
+                String compositeAttributeClassName =
+                    StringUtils.capitalize(nonKeyAttribute.getName());
+                OntClass compositeAttributeClass = model.createClass(
+                    NS + compositeAttributeClassName);
+
+                addHasAndIsOfObjectProperties(
+                    compositeAttributeClassName,
+                    entityClass,
+                    compositeAttributeClass,
+                    !nonKeyAttribute.isMultivalued(),
+                    false
+                );
+
+                for (Attribute componentAttribute : nonKeyAttribute.getComponentAttributes()) {
+                    addDatatypeProperty(
+                        StringUtils.capitalize(componentAttribute.getName()),
+                        compositeAttributeClass,
+                        !componentAttribute.isMultivalued(),
+                        false
+                    );
+                }
+            } else {
+                // Map multivalued and simple attributes
+                addDatatypeProperty(
+                    StringUtils.capitalize(nonKeyAttribute.getName()),
+                    entityClass,
+                    !nonKeyAttribute.isMultivalued(),
+                    false
+                );
+            }
         }
 
         return entityClass;

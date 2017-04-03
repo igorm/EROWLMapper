@@ -135,6 +135,10 @@ public class Schema {
                     }
                 }
             }
+
+            if (entity.isWeak() && StringUtils.isBlank(entity.getOwnerName())) {
+                throw new InconsistentSchemaException("Every weak entity must have an owner name.");
+            }
         }
     }
 }
