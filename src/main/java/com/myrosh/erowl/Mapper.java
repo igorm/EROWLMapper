@@ -66,32 +66,66 @@ public class Mapper {
         return model;
     }
 
-    private OntClass mapKeyAttributes(
-        OntClass entityClass,
-        List<Attribute> keyAttributes
+    // private OntClass mapKeyAttributes(
+    //     OntClass entityClass,
+    //     List<Attribute> keyAttributes
+    // ) throws MappingException {
+    //     OntClass keyClass = addClass(entityClass.getLocalName() + "Key");
+
+    //     addHasIsOfObjectProperties(
+    //         keyClass.getLocalName(),
+    //         entityClass,
+    //         keyClass,
+    //         true,
+    //         true,
+    //         true,
+    //         true
+    //     );
+
+    //     for (Attribute keyAttribute : keyAttributes) {
+    //         addDatatypeProperty(
+    //             keyAttribute.getName(),
+    //             keyClass,
+    //             true,
+    //             true
+    //         );
+    //     }
+
+    //     return keyClass;
+    // }
+
+    private OntClass addBClass(
+        OntClass aClass,
+        String name,
+        boolean aIsFunctional,
+        boolean aIsMinCardinalityOne,
+        boolean bIsFunctional,
+        boolean bIsMinCardinalityOne
     ) throws MappingException {
-        OntClass keyClass = addClass(entityClass.getLocalName() + "Key");
+        OntClass bClass = addClass(name);
 
         addHasIsOfObjectProperties(
-            keyClass.getLocalName(),
-            entityClass,
-            keyClass,
+            bClass.getLocalName(),
+            aClass,
+            bClass,
+            aIsFunctional,
+            aIsMinCardinalityOne,
+            bIsFunctional,
+            bIsMinCardinalityOne
+        );
+
+        return bClass;
+    }
+
+    private OntClass addKeyClass(OntClass aClass) throws MappingException {
+        return addBClass(
+            aClass,
+            aClass.getLocalName() + "Key",
             true,
             true,
             true,
             true
         );
-
-        for (Attribute keyAttribute : keyAttributes) {
-            addDatatypeProperty(
-                keyAttribute.getName(),
-                keyClass,
-                true,
-                true
-            );
-        }
-
-        return keyClass;
     }
 
     private OntClass mapEntity(Entity entity) throws MappingException {
@@ -104,34 +138,34 @@ public class Mapper {
 
             if (keyAttribute.isComposite()) {
                 // Map the single composite key attribute
-                mapKeyAttributes(entityClass, keyAttribute.getComponentAttributes());
+                OntClass keyClass = addKeyClass(entityClass);
+
+                for (Attribute componentAttribute : keyAttribute.getComponentAttributes()) {
+                    addDatatypeProperty(componentAttribute.getName(), keyClass, true, true);
+                }
             } else {
                 // Map the single simple key attribute
-                addDatatypeProperty(
-                    keyAttribute.getName(),
-                    entityClass,
-                    true,
-                    true
-                );
+                addDatatypeProperty(keyAttribute.getName(), entityClass, true, true);
             }
         } else if (keyAttributes.size() > 1) {
             // Map multiple simple key attributes
-            mapKeyAttributes(entityClass, keyAttributes);
+            OntClass keyClass = addKeyClass(entityClass);
+
+            for (Attribute keyAttribute : keyAttributes) {
+                addDatatypeProperty(keyAttribute.getName(), keyClass, true, true);
+            }
         }
 
         for (Attribute nonKeyAttribute : entity.getNonKeyAttributes()) {
             if (nonKeyAttribute.isComposite()) {
                 // Map composite attributes
-                String compositeAttributeClassName = cleanAndCapitalize(nonKeyAttribute.getName());
-                OntClass compositeAttributeClass = model.createClass(
-                    NS + compositeAttributeClassName);
-
-                addHasAndIsOfObjectProperties(
-                    compositeAttributeClassName,
+                OntClass compositeAttributeClass = addBClass(
                     entityClass,
-                    compositeAttributeClass,
+                    nonKeyAttribute.getName(),
                     !nonKeyAttribute.isMultivalued(),
-                    false
+                    false,
+                    true,
+                    true
                 );
 
                 for (Attribute componentAttribute : nonKeyAttribute.getComponentAttributes()) {
@@ -515,7 +549,7 @@ public class Mapper {
         boolean aIsMinCardinalityOne,
         boolean bIsFunctional,
         boolean bIsMinCardinalityOne
-    ) {
+    ) throws MappingException {
         return addInverseObjectProperties(
             "has",
             basename,
@@ -545,7 +579,7 @@ public class Mapper {
         boolean aIsMinCardinalityOne,
         boolean bIsFunctional,
         boolean bIsMinCardinalityOne
-    ) {
+    ) throws MappingException {
         ObjectProperty aProperty = addObjectProperty(
             aPrefix,
             aBasename,
@@ -635,7 +669,7 @@ public class Mapper {
     }
 
     private OntClass addClass(String name) throws MappingException {
-        String name = cleanAndCapitalize(name);
+        name = cleanAndCapitalize(name);
         String uri = NS + name;
 
         if (model.getOntClass(uri) != null) {
