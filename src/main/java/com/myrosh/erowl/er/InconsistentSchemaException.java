@@ -1,7 +1,7 @@
 package com.myrosh.erowl.er;
 
 /**
- * Inconsistent schema exception class.
+ * ER schema exception class.
  *
  * @author igor
  */

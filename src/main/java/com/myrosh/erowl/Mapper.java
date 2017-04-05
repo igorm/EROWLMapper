@@ -1,7 +1,5 @@
 package com.myrosh.erowl;
 
-import java.util.HashSet;
-import java.util.Set;
 import java.util.List;
 import java.util.ArrayList;
 
@@ -11,6 +9,7 @@ import org.apache.jena.ontology.DatatypeProperty;
 import org.apache.jena.ontology.ObjectProperty;
 import org.apache.jena.ontology.OntClass;
 import org.apache.jena.ontology.OntModel;
+import org.apache.jena.ontology.OntModelSpec;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.vocabulary.XSD;
 
@@ -19,7 +18,8 @@ import com.myrosh.erowl.er.schema.Entity;
 import com.myrosh.erowl.er.schema.ParticipatingEntity;
 import com.myrosh.erowl.er.schema.Relationship;
 import com.myrosh.erowl.er.schema.Schema;
-import com.myrosh.erowl.er.InconsistentSchemaException;
+
+import com.myrosh.erowl.MappingException;
 
 /**
  * @author igorm
@@ -32,7 +32,7 @@ public class Mapper {
     /**
      * Namespace URI constant
      */
-    public static final String NS = "http://www.semanticweb.org/ontologies/erowl#";
+    public static final String NS = "http://www.semanticweb.org/ontologies/erowlmapper#";
 
     /**
      * ER schema
@@ -45,25 +45,19 @@ public class Mapper {
     private OntModel model;
 
     /**
-     * Mapped entity names
-     */
-    // private Set<String> mappedEntityNames = new HashSet<String>();
-
-    /**
-     * Mapped relationship names
-     */
-    // private Set<String> mappedRelationshipNames = new HashSet<String>();
-
-    /**
      * @param schema
      * @return
-     * @throws InconsistentSchemaException
+     * @throws MappingException
      */
-    public OntModel map(Schema schema) throws Exception {
+    public OntModel map(Schema schema) throws MappingException {
         this.schema = schema;
-        model = ModelFactory.createOntologyModel();
+        model = ModelFactory.createOntologyModel(OntModelSpec.OWL_LITE_MEM);
 
-        mapStrongEntities();
+        // Mapping Rule 1
+        for (Entity entity : schema.getStrongEntities()) {
+            mapEntity(entity);
+        }
+
         mapWeakEntities();
         mapBinaryRelationshipsWithoutAttributes();
         mapBinaryRelationshipsWithAttributes();
@@ -72,84 +66,63 @@ public class Mapper {
         return model;
     }
 
-    /**
-     * Mapping Rule 1.
-     *
-     * Map each entity into a class.
-     * Map each simple attribute into a functional datatype property.
-     * Map each multivalued attribute into a datatype property.
-     * Map each composite attribute into a separate class with functional datatype properties
-     * corresponding to the composite attribute’s components; add a functional object property with
-     * range set to the newly created class. Map each simple key attribute into a functional datatype property with
-     * min cardinality set to one. Map each composite key attribute into a separate class with
-     * functional datatype properties corresponding to the composite primary key’s components; add
-     * a functional inverse-functional object property whose range is set to the newly created
-     * class with min cardinality set to one.
-     */
-    private void mapStrongEntities() {
-        for (Entity entity : schema.getStrongEntities()) {
-            mapEntity(entity);
+    private OntClass mapKeyAttributes(
+        OntClass entityClass,
+        List<Attribute> keyAttributes
+    ) throws MappingException {
+        OntClass keyClass = addClass(entityClass.getLocalName() + "Key");
+
+        addHasIsOfObjectProperties(
+            keyClass.getLocalName(),
+            entityClass,
+            keyClass,
+            true,
+            true,
+            true,
+            true
+        );
+
+        for (Attribute keyAttribute : keyAttributes) {
+            addDatatypeProperty(
+                keyAttribute.getName(),
+                keyClass,
+                true,
+                true
+            );
         }
+
+        return keyClass;
     }
 
-    private OntClass mapEntity(Entity entity) {
+    private OntClass mapEntity(Entity entity) throws MappingException {
         // Map the entity
-        String entityClassName = StringUtils.capitalize(entity.getName());
-        OntClass entityClass = model.createClass(NS + entityClassName);
-
-        // Map key attributes
+        OntClass entityClass = addClass(entity.getName());
         List<Attribute> keyAttributes = entity.getKeyAttributes();
-        String keyAttributeClassName = entityClassName + "Key";
 
         if (keyAttributes.size() == 1) {
             Attribute keyAttribute = keyAttributes.get(0);
 
             if (keyAttribute.isComposite()) {
-                OntClass keyAttributeClass = model.createClass(NS + keyAttributeClassName);
-
-                addHasAndIsOfObjectProperties(
-                    keyAttributeClassName, entityClass, keyAttributeClass, true, true);
-
-                for (Attribute componentAttribute : keyAttribute.getComponentAttributes()) {
-                    addDatatypeProperty(
-                        StringUtils.capitalize(componentAttribute.getName()),
-                        keyAttributeClass,
-                        true,
-                        true
-                    );
-                }
+                // Map the single composite key attribute
+                mapKeyAttributes(entityClass, keyAttribute.getComponentAttributes());
             } else {
-                // Map the key attribute to a functional datatypeproperty with mincardinality 1
+                // Map the single simple key attribute
                 addDatatypeProperty(
-                    StringUtils.capitalize(keyAttribute.getName()),
+                    keyAttribute.getName(),
                     entityClass,
                     true,
                     true
                 );
             }
         } else if (keyAttributes.size() > 1) {
-            // Map key attributes to a separate class with corresponding functional
-            // datatypeproperties with mincardinality 1
-            OntClass keyAttributeClass = model.createClass(NS + keyAttributeClassName);
-
-            addHasAndIsOfObjectProperties(
-                keyAttributeClassName, entityClass, keyAttributeClass, true, true);
-
-            for (Attribute keyAttribute : keyAttributes) {
-                addDatatypeProperty(
-                    StringUtils.capitalize(keyAttribute.getName()),
-                    keyAttributeClass,
-                    true,
-                    true
-                );
-            }
+            // Map multiple simple key attributes
+            mapKeyAttributes(entityClass, keyAttributes);
         }
 
         for (Attribute nonKeyAttribute : entity.getNonKeyAttributes()) {
             if (nonKeyAttribute.isComposite()) {
-                // Map a composite attribute to a class with corresponding properties
-                String compositeAttributeClassName =
-                    StringUtils.capitalize(nonKeyAttribute.getName());
+                // Map composite attributes
+                String compositeAttributeClassName = cleanAndCapitalize(nonKeyAttribute.getName());
                 OntClass compositeAttributeClass = model.createClass(
                     NS + compositeAttributeClassName);
 
@@ -163,16 +136,16 @@ public class Mapper {
 
                 for (Attribute componentAttribute : nonKeyAttribute.getComponentAttributes()) {
                     addDatatypeProperty(
-                        StringUtils.capitalize(componentAttribute.getName()),
+                        componentAttribute.getName(),
                         compositeAttributeClass,
                         !componentAttribute.isMultivalued(),
                         false
                     );
                 }
             } else {
-                // Map multivalued and simple attributes
+                // Map simple attributes
                 addDatatypeProperty(
-                    StringUtils.capitalize(nonKeyAttribute.getName()),
+                    nonKeyAttribute.getName(),
                     entityClass,
                     !nonKeyAttribute.isMultivalued(),
                     false
@@ -196,7 +169,7 @@ public class Mapper {
      * property whose range is set to the newly created class and whose min cardinality is set
      * to one.
      */
-    private void mapWeakEntities() throws Exception {
+    private void mapWeakEntities() {
         for (Entity entity : schema.getEntities()) {
             if (entity.isWeak()) {
                 // Create the classes: owner, weak, weakkey
@@ -213,11 +186,11 @@ public class Mapper {
                 Relationship relationship = schema.getIdentifyingRelationship(
                     entity.getOwnerName(), entity.getName());
 
-                if (relationship == null) {
-                    throw new Exception("Inconsistent schema: there is no identifying relationship"
-                        + " between strong entity " + entity.getOwnerName()
-                        + " and weak entity " + entity.getName() + ".");
-                }
+                // if (relationship == null) {
+                //     throw new InconsistentSchemaException("There is no identifying relationship"
+                //         + " between strong entity " + entity.getOwnerName()
+                //         + " and weak entity " + entity.getName() + ".");
+                // }
 
                 ParticipatingEntity ownerParticipatingEntity =
                     relationship.getParticipatingEntity(entity.getOwnerName());
@@ -534,41 +507,107 @@ public class Mapper {
         }
     }
 
-    private List<ObjectProperty> addHasAndIsOfObjectProperties(
+    private List<ObjectProperty> addHasIsOfObjectProperties(
         String basename,
-        OntClass hasDomainClass,
-        OntClass isOfDomainClass,
-        boolean isFunctional,
-        boolean isMinCardinalityOne
+        OntClass aClass,
+        OntClass bClass,
+        boolean aIsFunctional,
+        boolean aIsMinCardinalityOne,
+        boolean bIsFunctional,
+        boolean bIsMinCardinalityOne
     ) {
-        ObjectProperty hasProperty = model.createObjectProperty(
-            NS + "has" + basename, isFunctional);
-        hasProperty.addDomain(hasDomainClass);
-        hasProperty.addRange(isOfDomainClass);
+        return addInverseObjectProperties(
+            "has",
+            basename,
+            "",
+            "is",
+            basename,
+            "Of",
+            aClass,
+            bClass,
+            aIsFunctional,
+            aIsMinCardinalityOne,
+            bIsFunctional,
+            bIsMinCardinalityOne
+        );
+    }
 
-        if (isMinCardinalityOne) {
-            hasDomainClass.addSubClass(
-                model.createMinCardinalityRestriction(null, hasProperty, 1));
-        }
+    private List<ObjectProperty> addInverseObjectProperties(
+        String aPrefix,
+        String aBasename,
+        String aSuffix,
+        String bPrefix,
+        String bBasename,
+        String bSuffix,
+        OntClass aClass,
+        OntClass bClass,
+        boolean aIsFunctional,
+        boolean aIsMinCardinalityOne,
+        boolean bIsFunctional,
+        boolean bIsMinCardinalityOne
+    ) {
+        ObjectProperty aProperty = addObjectProperty(
+            aPrefix,
+            aBasename,
+            aSuffix,
+            aClass,
+            bClass,
+            null,
+            aIsFunctional,
+            aIsMinCardinalityOne
+        );
 
-        String isOfPropertyURI = NS + "is" + basename + "Of";
-        ObjectProperty isOfProperty = isFunctional
-            ? model.createInverseFunctionalProperty(isOfPropertyURI, true)
-            : model.createObjectProperty(isOfPropertyURI, false);
-        isOfProperty.addDomain(isOfDomainClass);
-        isOfProperty.addRange(hasDomainClass);
-        isOfProperty.addInverseOf(hasProperty);
-
-        if (isMinCardinalityOne) {
-            isOfDomainClass.addSubClass(
-                model.createMinCardinalityRestriction(null, isOfProperty, 1));
-        }
+        ObjectProperty bProperty = addObjectProperty(
+            bPrefix,
+            bBasename,
+            bSuffix,
+            bClass,
+            aClass,
+            aProperty,
+            bIsFunctional,
+            bIsMinCardinalityOne
+        );
 
         List<ObjectProperty> properties = new ArrayList<ObjectProperty>();
-        properties.add(hasProperty);
-        properties.add(isOfProperty);
+        properties.add(aProperty);
+        properties.add(bProperty);
 
         return properties;
+    }
+
+    private ObjectProperty addObjectProperty(
+        String prefix,
+        String basename,
+        String suffix,
+        OntClass domainClass,
+        OntClass rangeClass,
+        ObjectProperty inverseOfProperty,
+        boolean isFunctional,
+        boolean isMinCardinalityOne
+    ) throws MappingException {
+        String name = prefix + cleanAndCapitalize(basename) + suffix;
+        String uri = NS + name;
+
+        if (model.getObjectProperty(uri) != null) {
+            throw new MappingException("Object property " + name + " already exists.");
+        }
+
+        ObjectProperty property =
+            inverseOfProperty != null && inverseOfProperty.isFunctionalProperty()
+            ? model.createInverseFunctionalProperty(uri, isFunctional)
+            : model.createObjectProperty(uri, isFunctional);
+        property.addDomain(domainClass);
+        property.addRange(rangeClass);
+
+        if (inverseOfProperty != null) {
+            property.addInverseOf(inverseOfProperty);
+        }
+
+        if (isMinCardinalityOne) {
+            domainClass.addSubClass(model.createMinCardinalityRestriction(null, property, 1));
+        }
+
+        return property;
     }
 
     private DatatypeProperty addDatatypeProperty(
@@ -576,9 +615,15 @@ public class Mapper {
         OntClass domainClass,
         boolean isFunctional,
         boolean isMinCardinalityOne
-    ) {
-        DatatypeProperty property = model.createDatatypeProperty(
-            NS + "has" + basename, isFunctional);
+    ) throws MappingException {
+        String name = "has" + cleanAndCapitalize(basename);
+        String uri = NS + name;
+
+        if (model.getDatatypeProperty(uri) != null) {
+            throw new MappingException("Datatype property " + name + " already exists.");
+        }
+
+        DatatypeProperty property = model.createDatatypeProperty(uri, isFunctional);
         property.addDomain(domainClass);
         property.addRange(XSD.xstring);
 
@@ -587,5 +632,20 @@ public class Mapper {
         }
 
         return property;
+    }
+
+    private OntClass addClass(String name) throws MappingException {
+        String name = cleanAndCapitalize(name);
+        String uri = NS + name;
+
+        if (model.getOntClass(uri) != null) {
+            throw new MappingException("Class " + name + " already exists.");
+        }
+
+        return model.createClass(uri);
+    }
+
+    public static String cleanAndCapitalize(String string) {
+        return StringUtils.capitalize(string.replaceAll("[^\\p{L}\\p{Nd}]+", ""));
     }
 }

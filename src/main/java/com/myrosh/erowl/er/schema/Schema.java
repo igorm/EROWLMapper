@@ -122,6 +122,11 @@ public class Schema {
                     attributeNames.add(attribute.getName());
                 }
 
+                if (attribute.isKey() && attribute.isMultivalued()) {
+                    throw new InconsistentSchemaException("Key attribute " + attribute.getName()
+                        + " cannot be multivalued.");
+                }
+
                 for (Attribute componentAttribute : attribute.getComponentAttributes()) {
                     if (StringUtils.isBlank(componentAttribute.getName())) {
                         throw new InconsistentSchemaException("Every attribute must have a name.");
@@ -132,6 +137,16 @@ public class Schema {
                             "Attribute " + componentAttribute.getName() + " is a duplicate.");
                     } else {
                         attributeNames.add(componentAttribute.getName());
+                    }
+
+                    if (componentAttribute.isKey()) {
+                        throw new InconsistentSchemaException("Component attribute "
+                            + attribute.getName() + " cannot be a key.");
+                    }
+
+                    if (componentAttribute.isComposite()) {
+                        throw new InconsistentSchemaException("Component attribute "
+                            + attribute.getName() + " cannot be composite.");
                     }
                 }
             }
