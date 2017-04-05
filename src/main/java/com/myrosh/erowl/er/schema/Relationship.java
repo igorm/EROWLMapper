@@ -2,6 +2,9 @@ package com.myrosh.erowl.er.schema;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Collections;
+
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * @author igorm
@@ -99,5 +102,18 @@ public class Relationship {
      */
     public void addAttribute(Attribute attribute) {
         attributes.add(attribute);
+    }
+
+    @Override
+    public String toString() {
+        List<String> participatingEntityStrings = new ArrayList<String>();
+
+        for (ParticipatingEntity participatingEntity : participatingEntities) {
+            participatingEntityStrings.add(participatingEntity.toString());
+        }
+
+        Collections.sort(participatingEntityStrings);
+
+        return StringUtils.join(participatingEntityStrings, ',');
     }
 }

@@ -6,12 +6,6 @@ entities:
             -
                 name: ssn
                 key: true
-                composite: true
-                componentAttributes:
-                    -
-                        name: foo
-                    -
-                        name: bar
             -
                 name: name
                 composite: true

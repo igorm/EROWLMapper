@@ -11,6 +11,6 @@ public class InconsistentSchemaException extends Exception {
      * @param message
      */
     public InconsistentSchemaException(String message) {
-        super("Inconsistent schema: " + message);
+        super("ER Schema Inconsistency: " + message);
     }
 }

@@ -128,10 +128,14 @@ public class Mapper {
         return entityClass;
     }
 
-    private void mapWeakEntities() {
+    private void mapWeakEntities() throws MappingException {
         for (Entity entity : schema.getWeakEntities()) {
-            // Create the classes: owner, weak, weakkey
-            OntClass ownerEntityClass = model.getOntClass(NS + entity.getOwnerName());
+            Relationship relationship = schema.getIdentifyingRelationship(
+                entity.getOwnerName(), entity.getName());
+
+
+
+            OntClass ownerEntityClass = getClass(entity.getOwnerName());
             OntClass weakEntityClass = model.createClass(NS + entity.getName());
             OntClass weakEntityKeyClass = model.createClass(NS + entity.getName() + "Key");
 
@@ -141,8 +145,6 @@ public class Mapper {
             hasWeakEntityProperty.addDomain(ownerEntityClass);
             hasWeakEntityProperty.addRange(weakEntityClass);
 
-            Relationship relationship = schema.getIdentifyingRelationship(
-                entity.getOwnerName(), entity.getName());
 
             // if (relationship == null) {
             //     throw new InconsistentSchemaException("There is no identifying relationship"
@@ -634,6 +636,19 @@ public class Mapper {
         }
 
         return model.createClass(uri);
+    }
+
+    private OntClass getClass(String name) throws MappingException {
+        name = cleanAndCapitalize(name);
+        String uri = NS + name;
+
+        OntClass clazz = model.getOntClass(uri);
+
+        if (clazz == null) {
+            throw new MappingException("Class " + name + " does not exists.");
+        }
+
+        return clazz;
     }
 
     public static String cleanAndCapitalize(String string) {

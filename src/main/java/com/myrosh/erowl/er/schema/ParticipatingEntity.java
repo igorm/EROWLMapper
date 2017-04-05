@@ -83,4 +83,9 @@ public class ParticipatingEntity {
     public void setMax(int max) {
         this.max = max;
     }
+
+    @Override
+    public String toString() {
+        return name + "/" + role;
+    }
 }

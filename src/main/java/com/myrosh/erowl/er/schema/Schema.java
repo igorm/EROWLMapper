@@ -130,6 +130,25 @@ public class Schema {
     }
 
     /**
+     * @param entityName
+     *
+     * @return
+     */
+    public List<Relationship> getIdentifyingRelationships(String entityName) {
+        List<Relationship> identifyingRelationships = new ArrayList<Relationship>();
+
+        for (Relationship relationship : relationships) {
+            if (relationship.isIdentifying()
+                && relationship.getParticipatingEntity(entityName) != null
+            ) {
+                identifyingRelationships.add(relationship);
+            }
+        }
+
+        return identifyingRelationships;
+    }
+
+    /**
      * @param relationship
      */
     public void addRelationship(Relationship relationship) {
@@ -170,6 +189,8 @@ public class Schema {
             validateAttributes(entity.getAttributes());
         }
 
+        Set<String> relationshipStrings = new HashSet<String>();
+
         for (Relationship relationship : relationships) {
             if (StringUtils.isBlank(relationship.getName())) {
                 throw new InconsistentSchemaException("Every relationship must have a name.");
@@ -182,7 +203,15 @@ public class Schema {
                 relationshipNames.add(relationship.getName());
             }
 
-            validateAttributes(relationship.getAttributes());
+            if (relationship.getParticipatingEntities().size() < 2) {
+                throw new InconsistentSchemaException("Relationship " + relationship.getName()
+                    + " must have at least 2 participating entities.");
+            }
+
+            if (relationship.getParticipatingEntities().size() > 3) {
+                throw new InconsistentSchemaException("Relationship " + relationship.getName()
+                    + " must have at most 3 participating entities.");
+            }
 
             for (ParticipatingEntity participatingEntity : relationship.getParticipatingEntities()) {
                 if (StringUtils.isBlank(participatingEntity.getName())) {
@@ -212,9 +241,25 @@ public class Schema {
                     || (aEntity.isWeak() && bEntity.isStrong()))
                 ) {
                     throw new InconsistentSchemaException("Identifying relationship "
-                        + relationship.getName() + " must have 1 strong participating entity "
+                        + relationship.getName() + " must have 1 strong participating entity"
                         + " and 1 weak participating entity.");
                 }
+            }
+
+            if (relationshipStrings.contains(relationship.toString())) {
+                throw new InconsistentSchemaException("Relationship " + relationship.getName()
+                    + " is a duplicate based on its participating entities and their roles.");
+            } else {
+                relationshipStrings.add(relationship.toString());
+            }
+
+            validateAttributes(relationship.getAttributes());
+        }
+
+        for (Entity entity : getWeakEntities()) {
+            if (getIdentifyingRelationships(entity.getName()).size() != 1) {
+                throw new InconsistentSchemaException("Weak entity " + entity.getName()
+                    + " must have exactly 1 identifying relationship with a strong entity.");
             }
         }
     }
