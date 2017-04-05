@@ -27,6 +27,12 @@ public class Schema {
      */
     private List<Relationship> relationships = new ArrayList<Relationship>();
 
+    Set<String> entityNames = new HashSet<String>();
+
+    Set<String> attributeNames = new HashSet<String>();
+
+    Set<String> relationshipNames = new HashSet<String>();
+
     /**
      * @return
      */
@@ -37,16 +43,57 @@ public class Schema {
     /**
      * @return
      */
+    public Entity getEntity(String name) {
+        for (Entity entity : entities) {
+            if (entity.getName().equals(name)) {
+                return entity;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @return
+     */
     public List<Entity> getStrongEntities() {
         List<Entity> strongEntities = new ArrayList<Entity>();
 
         for (Entity entity : entities) {
-            if (!entity.isWeak()) {
+            if (entity.isStrong()) {
                 strongEntities.add(entity);
             }
         }
 
         return strongEntities;
+    }
+
+    /**
+     * @return
+     */
+    public Entity getStrongEntity(String name) {
+        for (Entity entity : getStrongEntities()) {
+            if (entity.getName().equals(name)) {
+                return entity;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @return
+     */
+    public List<Entity> getWeakEntities() {
+        List<Entity> weakEntities = new ArrayList<Entity>();
+
+        for (Entity entity : entities) {
+            if (entity.isWeak()) {
+                weakEntities.add(entity);
+            }
+        }
+
+        return weakEntities;
     }
 
     /**
@@ -90,14 +137,11 @@ public class Schema {
     }
 
     /**
-     * @throws Exception
+     * @throws InconsistentSchemaException
      *
      * Checks for schema inconsistencies.
      */
     public void validate() throws InconsistentSchemaException {
-        Set<String> entityNames = new HashSet<String>();
-        Set<String> attributeNames = new HashSet<String>();
-
         for (Entity entity : entities) {
             if (StringUtils.isBlank(entity.getName())) {
                 throw new InconsistentSchemaException("Every entity must have a name.");
@@ -110,49 +154,115 @@ public class Schema {
                 entityNames.add(entity.getName());
             }
 
-            for (Attribute attribute : entity.getAttributes()) {
-                if (StringUtils.isBlank(attribute.getName())) {
-                    throw new InconsistentSchemaException("Every attribute must have a name.");
+            if (entity.isWeak()) {
+                if (StringUtils.isBlank(entity.getOwnerName())) {
+                    throw new InconsistentSchemaException("Weak entity " + entity.getName()
+                        + " must have an owner name.");
                 }
 
-                if (attributeNames.contains(attribute.getName())) {
-                    throw new InconsistentSchemaException("Attribute " + attribute.getName()
-                        + " is a duplicate.");
-                } else {
-                    attributeNames.add(attribute.getName());
-                }
-
-                if (attribute.isKey() && attribute.isMultivalued()) {
-                    throw new InconsistentSchemaException("Key attribute " + attribute.getName()
-                        + " cannot be multivalued.");
-                }
-
-                for (Attribute componentAttribute : attribute.getComponentAttributes()) {
-                    if (StringUtils.isBlank(componentAttribute.getName())) {
-                        throw new InconsistentSchemaException("Every attribute must have a name.");
-                    }
-
-                    if (attributeNames.contains(componentAttribute.getName())) {
-                        throw new InconsistentSchemaException(
-                            "Attribute " + componentAttribute.getName() + " is a duplicate.");
-                    } else {
-                        attributeNames.add(componentAttribute.getName());
-                    }
-
-                    if (componentAttribute.isKey()) {
-                        throw new InconsistentSchemaException("Component attribute "
-                            + attribute.getName() + " cannot be a key.");
-                    }
-
-                    if (componentAttribute.isComposite()) {
-                        throw new InconsistentSchemaException("Component attribute "
-                            + attribute.getName() + " cannot be composite.");
-                    }
+                if (getStrongEntity(entity.getOwnerName()) == null) {
+                    throw new InconsistentSchemaException("Weak entity " + entity.getName()
+                        + " refers to owner entity " + entity.getOwnerName()
+                        + " which does not exist or is not strong.");
                 }
             }
 
-            if (entity.isWeak() && StringUtils.isBlank(entity.getOwnerName())) {
-                throw new InconsistentSchemaException("Every weak entity must have an owner name.");
+            validateAttributes(entity.getAttributes());
+        }
+
+        for (Relationship relationship : relationships) {
+            if (StringUtils.isBlank(relationship.getName())) {
+                throw new InconsistentSchemaException("Every relationship must have a name.");
+            }
+
+            if (relationshipNames.contains(relationship.getName())) {
+                throw new InconsistentSchemaException("Relationship " + relationship.getName()
+                    + " is a duplicate.");
+            } else {
+                relationshipNames.add(relationship.getName());
+            }
+
+            validateAttributes(relationship.getAttributes());
+
+            for (ParticipatingEntity participatingEntity : relationship.getParticipatingEntities()) {
+                if (StringUtils.isBlank(participatingEntity.getName())) {
+                    throw new InconsistentSchemaException(
+                        "Every participating entity must have a name.");
+                }
+
+                if (getEntity(participatingEntity.getName()) == null) {
+                    throw new InconsistentSchemaException(
+                        "Participating entity refers to entity " + participatingEntity.getName()
+                        + " which does not exist.");
+                }
+            }
+
+            if (relationship.isIdentifying()) {
+                if (relationship.getParticipatingEntities().size() != 2) {
+                    throw new InconsistentSchemaException("Identifying relationship "
+                        + relationship.getName() + " must have exactly 2 participating entities.");
+                }
+
+                List<ParticipatingEntity> participatingEntities =
+                    relationship.getParticipatingEntities();
+                Entity aEntity = getEntity(participatingEntities.get(0).getName());
+                Entity bEntity = getEntity(participatingEntities.get(1).getName());
+
+                if (!((aEntity.isStrong() && bEntity.isWeak())
+                    || (aEntity.isWeak() && bEntity.isStrong()))
+                ) {
+                    throw new InconsistentSchemaException("Identifying relationship "
+                        + relationship.getName() + " must have 1 strong participating entity "
+                        + " and 1 weak participating entity.");
+                }
+            }
+        }
+    }
+
+    /**
+     * @throws InconsistentSchemaException
+     *
+     * Checks for schema inconsistencies.
+     */
+    public void validateAttributes(List<Attribute> attributes) throws InconsistentSchemaException {
+        for (Attribute attribute : attributes) {
+            if (StringUtils.isBlank(attribute.getName())) {
+                throw new InconsistentSchemaException("Every attribute must have a name.");
+            }
+
+            if (attributeNames.contains(attribute.getName())) {
+                throw new InconsistentSchemaException("Attribute " + attribute.getName()
+                    + " is a duplicate.");
+            } else {
+                attributeNames.add(attribute.getName());
+            }
+
+            if (attribute.isKey() && attribute.isMultivalued()) {
+                throw new InconsistentSchemaException("Key attribute " + attribute.getName()
+                    + " cannot be multivalued.");
+            }
+
+            for (Attribute componentAttribute : attribute.getComponentAttributes()) {
+                if (StringUtils.isBlank(componentAttribute.getName())) {
+                    throw new InconsistentSchemaException("Every attribute must have a name.");
+                }
+
+                if (attributeNames.contains(componentAttribute.getName())) {
+                    throw new InconsistentSchemaException(
+                        "Attribute " + componentAttribute.getName() + " is a duplicate.");
+                } else {
+                    attributeNames.add(componentAttribute.getName());
+                }
+
+                if (componentAttribute.isKey()) {
+                    throw new InconsistentSchemaException("Component attribute "
+                        + attribute.getName() + " cannot be a key.");
+                }
+
+                if (componentAttribute.isComposite()) {
+                    throw new InconsistentSchemaException("Component attribute "
+                        + attribute.getName() + " cannot be composite.");
+                }
             }
         }
     }

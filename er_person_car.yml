@@ -6,33 +6,41 @@ entities:
             -
                 name: ssn
                 key: true
+                composite: true
+                componentAttributes:
+                    -
+                        name: foo
+                    -
+                        name: bar
             -
                 name: name
                 composite: true
                 componentAttributes:
                     -
                         name: first
-                        multivalued: true
                     -
                         name: last
-#     -
-#         name: Car
-#         attributes:
-#             -
-#                 name: vin
-#                 key: true
-#             -
-#                 name: make
-#             -
-#                 name: model
-# relationships:
-#     -
-#         name: Drives
-#         participatingEntities:
-#             -
-#                 name: Person
-#                 role: Driver
-#             -
-#                 name: Car
-#                 role: Vehicle
-#                 min: 1
+    -
+        name: Car
+        ownerName: Person
+        weak: true
+        attributes:
+            -
+                name: vin
+                key: true
+            -
+                name: make
+            -
+                name: model
+relationships:
+    -
+        name: Drives
+        identifying: true
+        participatingEntities:
+            -
+                name: Person
+                role: Driver
+            -
+                name: Car
+                role: Vehicle
+                min: 1

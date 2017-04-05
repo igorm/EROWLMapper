@@ -66,68 +66,6 @@ public class Mapper {
         return model;
     }
 
-    // private OntClass mapKeyAttributes(
-    //     OntClass entityClass,
-    //     List<Attribute> keyAttributes
-    // ) throws MappingException {
-    //     OntClass keyClass = addClass(entityClass.getLocalName() + "Key");
-
-    //     addHasIsOfObjectProperties(
-    //         keyClass.getLocalName(),
-    //         entityClass,
-    //         keyClass,
-    //         true,
-    //         true,
-    //         true,
-    //         true
-    //     );
-
-    //     for (Attribute keyAttribute : keyAttributes) {
-    //         addDatatypeProperty(
-    //             keyAttribute.getName(),
-    //             keyClass,
-    //             true,
-    //             true
-    //         );
-    //     }
-
-    //     return keyClass;
-    // }
-
-    private OntClass addBClass(
-        OntClass aClass,
-        String name,
-        boolean aIsFunctional,
-        boolean aIsMinCardinalityOne,
-        boolean bIsFunctional,
-        boolean bIsMinCardinalityOne
-    ) throws MappingException {
-        OntClass bClass = addClass(name);
-
-        addHasIsOfObjectProperties(
-            bClass.getLocalName(),
-            aClass,
-            bClass,
-            aIsFunctional,
-            aIsMinCardinalityOne,
-            bIsFunctional,
-            bIsMinCardinalityOne
-        );
-
-        return bClass;
-    }
-
-    private OntClass addKeyClass(OntClass aClass) throws MappingException {
-        return addBClass(
-            aClass,
-            aClass.getLocalName() + "Key",
-            true,
-            true,
-            true,
-            true
-        );
-    }
-
     private OntClass mapEntity(Entity entity) throws MappingException {
         // Map the entity
         OntClass entityClass = addClass(entity.getName());
@@ -140,8 +78,8 @@ public class Mapper {
                 // Map the single composite key attribute
                 OntClass keyClass = addKeyClass(entityClass);
 
-                for (Attribute componentAttribute : keyAttribute.getComponentAttributes()) {
-                    addDatatypeProperty(componentAttribute.getName(), keyClass, true, true);
+                for (Attribute attribute : keyAttribute.getComponentAttributes()) {
+                    addDatatypeProperty(attribute.getName(), keyClass, true, true);
                 }
             } else {
                 // Map the single simple key attribute
@@ -151,8 +89,8 @@ public class Mapper {
             // Map multiple simple key attributes
             OntClass keyClass = addKeyClass(entityClass);
 
-            for (Attribute keyAttribute : keyAttributes) {
-                addDatatypeProperty(keyAttribute.getName(), keyClass, true, true);
+            for (Attribute attribute : keyAttributes) {
+                addDatatypeProperty(attribute.getName(), keyClass, true, true);
             }
         }
 
@@ -168,11 +106,11 @@ public class Mapper {
                     true
                 );
 
-                for (Attribute componentAttribute : nonKeyAttribute.getComponentAttributes()) {
+                for (Attribute attribute : nonKeyAttribute.getComponentAttributes()) {
                     addDatatypeProperty(
-                        componentAttribute.getName(),
+                        attribute.getName(),
                         compositeAttributeClass,
-                        !componentAttribute.isMultivalued(),
+                        !attribute.isMultivalued(),
                         false
                     );
                 }
@@ -190,103 +128,88 @@ public class Mapper {
         return entityClass;
     }
 
-    /**
-     * Mapping Rule 2. Map each weak entity into a class with a functional object property whose
-     * range is set to the owner class, min cardinality set to one and an object property in the
-     * owner class with range set to the weak entity class. The object properties should be inverses
-     * of each other. Map the weak entity’s simple, multi-valued and composite attributes according
-     * to the first rule. Map partial key attributes into a separate class with corresponding
-     * functional datatype properties whose min cardinality is set to one, a functional object
-     * property with the range set to the owner entity class and whose min cardinality is set to
-     * one, a functional inverse-functional object property with the range set to the weak entity
-     * class and whose min cardinality is set to one; add a functional inverse-functional object
-     * property whose range is set to the newly created class and whose min cardinality is set
-     * to one.
-     */
     private void mapWeakEntities() {
-        for (Entity entity : schema.getEntities()) {
-            if (entity.isWeak()) {
-                // Create the classes: owner, weak, weakkey
-                OntClass ownerEntityClass = model.getOntClass(NS + entity.getOwnerName());
-                OntClass weakEntityClass = model.createClass(NS + entity.getName());
-                OntClass weakEntityKeyClass = model.createClass(NS + entity.getName() + "Key");
+        for (Entity entity : schema.getWeakEntities()) {
+            // Create the classes: owner, weak, weakkey
+            OntClass ownerEntityClass = model.getOntClass(NS + entity.getOwnerName());
+            OntClass weakEntityClass = model.createClass(NS + entity.getName());
+            OntClass weakEntityKeyClass = model.createClass(NS + entity.getName() + "Key");
 
-                // Create the owner-to-weak objectproperty
-                ObjectProperty hasWeakEntityProperty = model.createObjectProperty(
-                    NS + "has" + entity.getName());
-                hasWeakEntityProperty.addDomain(ownerEntityClass);
-                hasWeakEntityProperty.addRange(weakEntityClass);
+            // Create the owner-to-weak objectproperty
+            ObjectProperty hasWeakEntityProperty = model.createObjectProperty(
+                NS + "has" + entity.getName());
+            hasWeakEntityProperty.addDomain(ownerEntityClass);
+            hasWeakEntityProperty.addRange(weakEntityClass);
 
-                Relationship relationship = schema.getIdentifyingRelationship(
-                    entity.getOwnerName(), entity.getName());
+            Relationship relationship = schema.getIdentifyingRelationship(
+                entity.getOwnerName(), entity.getName());
 
-                // if (relationship == null) {
-                //     throw new InconsistentSchemaException("There is no identifying relationship"
-                //         + " between strong entity " + entity.getOwnerName()
-                //         + " and weak entity " + entity.getName() + ".");
-                // }
+            // if (relationship == null) {
+            //     throw new InconsistentSchemaException("There is no identifying relationship"
+            //         + " between strong entity " + entity.getOwnerName()
+            //         + " and weak entity " + entity.getName() + ".");
+            // }
 
-                ParticipatingEntity ownerParticipatingEntity =
-                    relationship.getParticipatingEntity(entity.getOwnerName());
+            ParticipatingEntity ownerParticipatingEntity =
+                relationship.getParticipatingEntity(entity.getOwnerName());
 
-                if (ownerParticipatingEntity.getMin() == 1) {
-                    ownerEntityClass.addSuperClass(
-                        model.createMinCardinalityRestriction(null, hasWeakEntityProperty, 1));
-                }
+            if (ownerParticipatingEntity.getMin() == 1) {
+                ownerEntityClass.addSuperClass(
+                    model.createMinCardinalityRestriction(null, hasWeakEntityProperty, 1));
+            }
 
-                if (ownerParticipatingEntity.getMax() == 1) {
-                    ownerEntityClass.addSuperClass(
-                        model.createMaxCardinalityRestriction(null, hasWeakEntityProperty, 1));
-                }
+            if (ownerParticipatingEntity.getMax() == 1) {
+                ownerEntityClass.addSuperClass(
+                    model.createMaxCardinalityRestriction(null, hasWeakEntityProperty, 1));
+            }
 
-                // Create the weak-to-owner objectproperty
-                ObjectProperty isWeakEntityOfProperty = model.createObjectProperty(
-                    NS + "is" + entity.getName() + "Of", true);
-                isWeakEntityOfProperty.addDomain(weakEntityClass);
-                isWeakEntityOfProperty.addRange(ownerEntityClass);
-                isWeakEntityOfProperty.addInverseOf(hasWeakEntityProperty);
-                weakEntityClass.addSuperClass(
-                    model.createMinCardinalityRestriction(null, isWeakEntityOfProperty, 1));
+            // Create the weak-to-owner objectproperty
+            ObjectProperty isWeakEntityOfProperty = model.createObjectProperty(
+                NS + "is" + entity.getName() + "Of", true);
+            isWeakEntityOfProperty.addDomain(weakEntityClass);
+            isWeakEntityOfProperty.addRange(ownerEntityClass);
+            isWeakEntityOfProperty.addInverseOf(hasWeakEntityProperty);
+            weakEntityClass.addSuperClass(
+                model.createMinCardinalityRestriction(null, isWeakEntityOfProperty, 1));
 
-                // Create the weakkey-to-owner functional objectproperty with mincardinality 1
-                ObjectProperty hasOwnerEntityProperty = model.createObjectProperty(
-                    NS + "has" + entity.getOwnerName(), true);
-                hasOwnerEntityProperty.addDomain(weakEntityKeyClass);
-                hasOwnerEntityProperty.addRange(ownerEntityClass);
-                weakEntityKeyClass.addSuperClass(
-                    model.createMinCardinalityRestriction(null, hasOwnerEntityProperty, 1));
+            // Create the weakkey-to-owner functional objectproperty with mincardinality 1
+            ObjectProperty hasOwnerEntityProperty = model.createObjectProperty(
+                NS + "has" + entity.getOwnerName(), true);
+            hasOwnerEntityProperty.addDomain(weakEntityKeyClass);
+            hasOwnerEntityProperty.addRange(ownerEntityClass);
+            weakEntityKeyClass.addSuperClass(
+                model.createMinCardinalityRestriction(null, hasOwnerEntityProperty, 1));
 
-                // Create the weak-to-weakkey inversefunctional functional objectproperty with mincardinality 1
-                ObjectProperty hasWeakEntityKeyProperty = model.createInverseFunctionalProperty(
-                    NS + "has" + entity.getName() + "Key", true);
-                hasWeakEntityKeyProperty.addDomain(weakEntityClass);
-                hasWeakEntityKeyProperty.addRange(weakEntityKeyClass);
-                weakEntityClass.addSuperClass(
-                    model.createMinCardinalityRestriction(null, hasWeakEntityKeyProperty, 1));
+            // Create the weak-to-weakkey inversefunctional functional objectproperty with mincardinality 1
+            ObjectProperty hasWeakEntityKeyProperty = model.createInverseFunctionalProperty(
+                NS + "has" + entity.getName() + "Key", true);
+            hasWeakEntityKeyProperty.addDomain(weakEntityClass);
+            hasWeakEntityKeyProperty.addRange(weakEntityKeyClass);
+            weakEntityClass.addSuperClass(
+                model.createMinCardinalityRestriction(null, hasWeakEntityKeyProperty, 1));
 
-                // Create the weakkey-to-weak inversefunctional functional objectproperty with mincardinality 1
-                ObjectProperty isWeakEntityKeyOfProperty = model.createInverseFunctionalProperty(
-                    NS + "is" + entity.getName() + "KeyOf", true);
-                isWeakEntityKeyOfProperty.addDomain(weakEntityKeyClass);
-                isWeakEntityKeyOfProperty.addRange(weakEntityClass);
-                weakEntityKeyClass.addSuperClass(model.createMinCardinalityRestriction(
-                    null, isWeakEntityKeyOfProperty, 1));
-                isWeakEntityKeyOfProperty.addInverseOf(hasWeakEntityKeyProperty);
+            // Create the weakkey-to-weak inversefunctional functional objectproperty with mincardinality 1
+            ObjectProperty isWeakEntityKeyOfProperty = model.createInverseFunctionalProperty(
+                NS + "is" + entity.getName() + "KeyOf", true);
+            isWeakEntityKeyOfProperty.addDomain(weakEntityKeyClass);
+            isWeakEntityKeyOfProperty.addRange(weakEntityClass);
+            weakEntityKeyClass.addSuperClass(model.createMinCardinalityRestriction(
+                null, isWeakEntityKeyOfProperty, 1));
+            isWeakEntityKeyOfProperty.addInverseOf(hasWeakEntityKeyProperty);
 
-                for (Attribute attribute : entity.getAttributes()) {
-                    if (attribute.isKey()) {
-                        DatatypeProperty keyAttributeProperty = model.createDatatypeProperty(
-                            NS + attribute.getName(), true);
-                        keyAttributeProperty.addDomain(weakEntityKeyClass);
-                        keyAttributeProperty.addRange(XSD.xstring);
-                        weakEntityKeyClass.addSuperClass(
-                            model.createMinCardinalityRestriction(null, keyAttributeProperty, 1));
-                    } else {
-                        DatatypeProperty simpleAttributeProperty = model.createDatatypeProperty(
-                            NS + attribute.getName(), true);
-                        simpleAttributeProperty.addDomain(weakEntityClass);
-                        simpleAttributeProperty.addRange(XSD.xstring);
-                    }
+            for (Attribute attribute : entity.getAttributes()) {
+                if (attribute.isKey()) {
+                    DatatypeProperty keyAttributeProperty = model.createDatatypeProperty(
+                        NS + attribute.getName(), true);
+                    keyAttributeProperty.addDomain(weakEntityKeyClass);
+                    keyAttributeProperty.addRange(XSD.xstring);
+                    weakEntityKeyClass.addSuperClass(
+                        model.createMinCardinalityRestriction(null, keyAttributeProperty, 1));
+                } else {
+                    DatatypeProperty simpleAttributeProperty = model.createDatatypeProperty(
+                        NS + attribute.getName(), true);
+                    simpleAttributeProperty.addDomain(weakEntityClass);
+                    simpleAttributeProperty.addRange(XSD.xstring);
                 }
             }
         }
@@ -539,6 +462,40 @@ public class Mapper {
                 isRelationshipOfThirdEntityProperty.addInverseOf(thirdEntityHasRelationshipsProperty);
             }
         }
+    }
+
+    private OntClass addKeyClass(OntClass aClass) throws MappingException {
+        return addBClass(
+            aClass,
+            aClass.getLocalName() + "Key",
+            true,
+            true,
+            true,
+            true
+        );
+    }
+
+    private OntClass addBClass(
+        OntClass aClass,
+        String name,
+        boolean aIsFunctional,
+        boolean aIsMinCardinalityOne,
+        boolean bIsFunctional,
+        boolean bIsMinCardinalityOne
+    ) throws MappingException {
+        OntClass bClass = addClass(name);
+
+        addHasIsOfObjectProperties(
+            bClass.getLocalName(),
+            aClass,
+            bClass,
+            aIsFunctional,
+            aIsMinCardinalityOne,
+            bIsFunctional,
+            bIsMinCardinalityOne
+        );
+
+        return bClass;
     }
 
     private List<ObjectProperty> addHasIsOfObjectProperties(

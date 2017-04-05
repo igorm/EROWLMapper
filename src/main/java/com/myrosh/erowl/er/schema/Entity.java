@@ -55,6 +55,13 @@ public class Entity {
     }
 
     /**
+     * @return
+     */
+    public boolean isStrong() {
+        return !weak;
+    }
+
+    /**
      * @param weak
      */
     public void setWeak(boolean weak) {
