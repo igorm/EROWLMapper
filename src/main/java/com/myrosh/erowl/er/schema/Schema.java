@@ -210,7 +210,7 @@ public class Schema {
 
             if (relationship.getParticipatingEntities().size() > 3) {
                 throw new InconsistentSchemaException("Relationship " + relationship.getName()
-                    + " must have at most 3 participating entities.");
+                    + " cannot have more than 3 participating entities.");
             }
 
             for (ParticipatingEntity participatingEntity : relationship.getParticipatingEntities()) {

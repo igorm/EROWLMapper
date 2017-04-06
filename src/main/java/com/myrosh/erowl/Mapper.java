@@ -53,14 +53,13 @@ public class Mapper {
         this.schema = schema;
         model = ModelFactory.createOntologyModel(OntModelSpec.OWL_LITE_MEM);
 
-        // Mapping Rule 1
-        for (Entity entity : schema.getStrongEntities()) {
-            mapEntity(entity);
-        }
-
-        mapWeakEntities();
+        mapStrongEntities();
+        mapWeakEntitiesAndIdentifyingRelationships();
         mapBinaryRelationshipsWithoutAttributes();
         mapBinaryRelationshipsWithAttributes();
+
+
+
         mapTernaryRelationships();
 
         return model;
@@ -128,148 +127,72 @@ public class Mapper {
         return entityClass;
     }
 
-    private void mapWeakEntities() throws MappingException {
+    private void mapStrongEntities() throws MappingException {
+        for (Entity entity : schema.getStrongEntities()) {
+            mapEntity(entity);
+        }
+    }
+
+    private void mapWeakEntitiesAndIdentifyingRelationships() throws MappingException {
         for (Entity entity : schema.getWeakEntities()) {
             Relationship relationship = schema.getIdentifyingRelationship(
                 entity.getOwnerName(), entity.getName());
 
-
-
-            OntClass ownerEntityClass = getClass(entity.getOwnerName());
-            OntClass weakEntityClass = model.createClass(NS + entity.getName());
-            OntClass weakEntityKeyClass = model.createClass(NS + entity.getName() + "Key");
-
-            // Create the owner-to-weak objectproperty
-            ObjectProperty hasWeakEntityProperty = model.createObjectProperty(
-                NS + "has" + entity.getName());
-            hasWeakEntityProperty.addDomain(ownerEntityClass);
-            hasWeakEntityProperty.addRange(weakEntityClass);
-
-
-            // if (relationship == null) {
-            //     throw new InconsistentSchemaException("There is no identifying relationship"
-            //         + " between strong entity " + entity.getOwnerName()
-            //         + " and weak entity " + entity.getName() + ".");
-            // }
+            if (relationship == null) {
+                throw new MappingException("There is no identifying relationship between weak"
+                    + " entity " + entity.getName() + " and strong entity "
+                    + entity.getOwnerName() + ".");
+            }
 
             ParticipatingEntity ownerParticipatingEntity =
                 relationship.getParticipatingEntity(entity.getOwnerName());
 
-            if (ownerParticipatingEntity.getMin() == 1) {
-                ownerEntityClass.addSuperClass(
-                    model.createMinCardinalityRestriction(null, hasWeakEntityProperty, 1));
-            }
+            OntClass ownerEntityClass = getClass(entity.getOwnerName());
+            OntClass weakEntityClass = mapEntity(entity);
 
-            if (ownerParticipatingEntity.getMax() == 1) {
-                ownerEntityClass.addSuperClass(
-                    model.createMaxCardinalityRestriction(null, hasWeakEntityProperty, 1));
-            }
-
-            // Create the weak-to-owner objectproperty
-            ObjectProperty isWeakEntityOfProperty = model.createObjectProperty(
-                NS + "is" + entity.getName() + "Of", true);
-            isWeakEntityOfProperty.addDomain(weakEntityClass);
-            isWeakEntityOfProperty.addRange(ownerEntityClass);
-            isWeakEntityOfProperty.addInverseOf(hasWeakEntityProperty);
-            weakEntityClass.addSuperClass(
-                model.createMinCardinalityRestriction(null, isWeakEntityOfProperty, 1));
-
-            // Create the weakkey-to-owner functional objectproperty with mincardinality 1
-            ObjectProperty hasOwnerEntityProperty = model.createObjectProperty(
-                NS + "has" + entity.getOwnerName(), true);
-            hasOwnerEntityProperty.addDomain(weakEntityKeyClass);
-            hasOwnerEntityProperty.addRange(ownerEntityClass);
-            weakEntityKeyClass.addSuperClass(
-                model.createMinCardinalityRestriction(null, hasOwnerEntityProperty, 1));
-
-            // Create the weak-to-weakkey inversefunctional functional objectproperty with mincardinality 1
-            ObjectProperty hasWeakEntityKeyProperty = model.createInverseFunctionalProperty(
-                NS + "has" + entity.getName() + "Key", true);
-            hasWeakEntityKeyProperty.addDomain(weakEntityClass);
-            hasWeakEntityKeyProperty.addRange(weakEntityKeyClass);
-            weakEntityClass.addSuperClass(
-                model.createMinCardinalityRestriction(null, hasWeakEntityKeyProperty, 1));
-
-            // Create the weakkey-to-weak inversefunctional functional objectproperty with mincardinality 1
-            ObjectProperty isWeakEntityKeyOfProperty = model.createInverseFunctionalProperty(
-                NS + "is" + entity.getName() + "KeyOf", true);
-            isWeakEntityKeyOfProperty.addDomain(weakEntityKeyClass);
-            isWeakEntityKeyOfProperty.addRange(weakEntityClass);
-            weakEntityKeyClass.addSuperClass(model.createMinCardinalityRestriction(
-                null, isWeakEntityKeyOfProperty, 1));
-            isWeakEntityKeyOfProperty.addInverseOf(hasWeakEntityKeyProperty);
-
-            for (Attribute attribute : entity.getAttributes()) {
-                if (attribute.isKey()) {
-                    DatatypeProperty keyAttributeProperty = model.createDatatypeProperty(
-                        NS + attribute.getName(), true);
-                    keyAttributeProperty.addDomain(weakEntityKeyClass);
-                    keyAttributeProperty.addRange(XSD.xstring);
-                    weakEntityKeyClass.addSuperClass(
-                        model.createMinCardinalityRestriction(null, keyAttributeProperty, 1));
-                } else {
-                    DatatypeProperty simpleAttributeProperty = model.createDatatypeProperty(
-                        NS + attribute.getName(), true);
-                    simpleAttributeProperty.addDomain(weakEntityClass);
-                    simpleAttributeProperty.addRange(XSD.xstring);
-                }
-            }
+            addHasIsOfObjectProperties(
+                weakEntityClass.getLocalName(),
+                ownerEntityClass,
+                weakEntityClass,
+                (ownerParticipatingEntity.getMax() == 1),
+                (ownerParticipatingEntity.getMin() == 1),
+                true,
+                true
+            );
         }
     }
 
-    /**
-     * Mapping Rule 3. Map each binary relationship without attributes into a pair of object
-     * properties in the two classes corresponding to the two participating entities. Map
-     * participating entities’ cardinality into min and max cardinality restrictions or combine
-     * characteristics of a functional property with a min cardinality restriction.
-     *
-     * TODO Update this method not to map identifying relationships which have already been
-     * processed during weak entities' mapping.
-     */
-    private void mapBinaryRelationshipsWithoutAttributes() {
+    private void mapBinaryRelationshipsWithoutAttributes() throws MappingException {
         for (Relationship relationship : schema.getRelationships()) {
-            if (relationship.getParticipatingEntities().size() == 2
+            if (!relationship.isIdentifying()
+                && relationship.isBinary()
                 && relationship.getAttributes().isEmpty()
             ) {
-                ParticipatingEntity firstParticipatingEntity = relationship.getParticipatingEntities().get(0);
-                ParticipatingEntity secondParticipatingEntity = relationship.getParticipatingEntities().get(1);
+                ParticipatingEntity aParticipatingEntity =
+                    relationship.getParticipatingEntities().get(0);
+                ParticipatingEntity bParticipatingEntity =
+                    relationship.getParticipatingEntities().get(1);
 
-                OntClass firstEntityClass = model.getOntClass(NS + firstParticipatingEntity.getName());
-                OntClass secondEntityClass = model.getOntClass(NS + secondParticipatingEntity.getName());
+                String inversePropertiesBasename = capitalizeCleanName(
+                    StringUtils.isBlank(bParticipatingEntity.getRole())
+                    ? bParticipatingEntity.getName()
+                    : bParticipatingEntity.getRole()
+                );
 
-                // Create the first-to-second objectproperty
-                ObjectProperty hasSecondEntityProperty = model.createObjectProperty(
-                    NS + "has" + secondParticipatingEntity.getName());
-                hasSecondEntityProperty.addDomain(firstEntityClass);
-                hasSecondEntityProperty.addRange(secondEntityClass);
-
-                if (firstParticipatingEntity.getMin() == 1) {
-                    firstEntityClass.addSuperClass(
-                        model.createMinCardinalityRestriction(null, hasSecondEntityProperty, 1));
-                }
-
-                if (firstParticipatingEntity.getMax() == 1) {
-                    firstEntityClass.addSuperClass(
-                        model.createMaxCardinalityRestriction(null, hasSecondEntityProperty, 1));
-                }
-
-                // Create the second-to-first objectproperty
-                ObjectProperty isSecondEntityOfProperty = model.createObjectProperty(
-                    NS + "is" + secondParticipatingEntity.getName() + "Of");
-                isSecondEntityOfProperty.addDomain(secondEntityClass);
-                isSecondEntityOfProperty.addRange(firstEntityClass);
-
-                if (secondParticipatingEntity.getMin() == 1) {
-                    secondEntityClass.addSuperClass(
-                        model.createMinCardinalityRestriction(null, isSecondEntityOfProperty, 1));
-                }
-
-                if (secondParticipatingEntity.getMax() == 1) {
-                    secondEntityClass.addSuperClass(
-                        model.createMaxCardinalityRestriction(null, isSecondEntityOfProperty, 1));
-                }
-
-                isSecondEntityOfProperty.addInverseOf(hasSecondEntityProperty);
+                addInverseObjectProperties(
+                    uncapitalizeCleanName(relationship.getName()),
+                    inversePropertiesBasename,
+                    "",
+                    "is",
+                    inversePropertiesBasename,
+                    "Of",
+                    getClass(aParticipatingEntity.getName()),
+                    getClass(bParticipatingEntity.getName()),
+                    (aParticipatingEntity.getMax() == 1),
+                    (aParticipatingEntity.getMin() == 1),
+                    (bParticipatingEntity.getMax() == 1),
+                    (bParticipatingEntity.getMin() == 1)
+                );
             }
         }
     }
@@ -283,9 +206,10 @@ public class Mapper {
      * from participating entity classes to the relationship class. For their inverse object
      * properties, min and max cardinality should be set to one.
      */
-    private void mapBinaryRelationshipsWithAttributes() {
+    private void mapBinaryRelationshipsWithAttributes() throws MappingException {
         for (Relationship relationship : schema.getRelationships()) {
-            if (relationship.getParticipatingEntities().size() == 2
+            if (!relationship.isIdentifying()
+                && relationship.isBinary()
                 && !relationship.getAttributes().isEmpty()
             ) {
                 ParticipatingEntity firstParticipatingEntity = relationship.getParticipatingEntities().get(0);
@@ -578,7 +502,7 @@ public class Mapper {
         boolean isFunctional,
         boolean isMinCardinalityOne
     ) throws MappingException {
-        String name = prefix + cleanAndCapitalize(basename) + suffix;
+        String name = prefix + capitalizeCleanName(basename) + suffix;
         String uri = NS + name;
 
         if (model.getObjectProperty(uri) != null) {
@@ -597,7 +521,7 @@ public class Mapper {
         }
 
         if (isMinCardinalityOne) {
-            domainClass.addSubClass(model.createMinCardinalityRestriction(null, property, 1));
+            domainClass.addSuperClass(model.createMinCardinalityRestriction(null, property, 1));
         }
 
         return property;
@@ -609,7 +533,7 @@ public class Mapper {
         boolean isFunctional,
         boolean isMinCardinalityOne
     ) throws MappingException {
-        String name = "has" + cleanAndCapitalize(basename);
+        String name = "has" + capitalizeCleanName(basename);
         String uri = NS + name;
 
         if (model.getDatatypeProperty(uri) != null) {
@@ -621,14 +545,14 @@ public class Mapper {
         property.addRange(XSD.xstring);
 
         if (isMinCardinalityOne) {
-            domainClass.addSubClass(model.createMinCardinalityRestriction(null, property, 1));
+            domainClass.addSuperClass(model.createMinCardinalityRestriction(null, property, 1));
         }
 
         return property;
     }
 
     private OntClass addClass(String name) throws MappingException {
-        name = cleanAndCapitalize(name);
+        name = capitalizeCleanName(name);
         String uri = NS + name;
 
         if (model.getOntClass(uri) != null) {
@@ -639,7 +563,7 @@ public class Mapper {
     }
 
     private OntClass getClass(String name) throws MappingException {
-        name = cleanAndCapitalize(name);
+        name = capitalizeCleanName(name);
         String uri = NS + name;
 
         OntClass clazz = model.getOntClass(uri);
@@ -651,7 +575,15 @@ public class Mapper {
         return clazz;
     }
 
-    public static String cleanAndCapitalize(String string) {
-        return StringUtils.capitalize(string.replaceAll("[^\\p{L}\\p{Nd}]+", ""));
+    public static String capitalizeCleanName(String name) {
+        return StringUtils.capitalize(cleanName(name));
+    }
+
+    public static String uncapitalizeCleanName(String name) {
+        return StringUtils.uncapitalize(cleanName(name));
+    }
+
+    public static String cleanName(String name) {
+        return name.replaceAll("[^\\p{L}\\p{Nd}]+", "");
     }
 }

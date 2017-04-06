@@ -93,6 +93,27 @@ public class Relationship {
     /**
      * @return
      */
+    public boolean isBinary() {
+        return participatingEntities.size() == 2;
+    }
+
+    /**
+     * @return
+     */
+    public boolean isTernary() {
+        return participatingEntities.size() == 3;
+    }
+
+    /**
+     * @return
+     */
+    public boolean isNary() {
+        return participatingEntities.size() > 3;
+    }
+
+    /**
+     * @return
+     */
     public List<Attribute> getAttributes() {
         return attributes;
     }
