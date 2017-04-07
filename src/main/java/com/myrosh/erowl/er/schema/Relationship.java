@@ -12,12 +12,7 @@ import org.apache.commons.lang3.StringUtils;
  * Models an ER relationship
  *
  */
-public class Relationship {
-
-    /**
-     * Name
-     */
-    private String name;
+public class Relationship extends Element {
 
     /**
      * Identifying flag
@@ -33,20 +28,6 @@ public class Relationship {
      * Attribute objects
      */
     private List<Attribute> attributes = new ArrayList<Attribute>();
-
-    /**
-     * @return
-     */
-    public String getName() {
-        return name;
-    }
-
-    /**
-     * @param name
-     */
-    public void setName(String name) {
-        this.name = name;
-    }
 
     /**
      * @return

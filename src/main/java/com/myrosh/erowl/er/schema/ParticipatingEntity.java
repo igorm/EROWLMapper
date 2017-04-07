@@ -1,17 +1,14 @@
 package com.myrosh.erowl.er.schema;
 
+import com.myrosh.erowl.Utils;
+
 /**
  * @author igorm
  *
  * Models an ER entity participating in a relationship
  *
  */
-public class ParticipatingEntity {
-
-    /**
-     * Name
-     */
-    private String name;
+public class ParticipatingEntity extends Element {
 
     /**
      * Role name
@@ -27,20 +24,6 @@ public class ParticipatingEntity {
      * Max cardinality constraint
      */
     private int max = -1;
-
-    /**
-     * @return
-     */
-    public String getName() {
-        return name;
-    }
-
-    /**
-     * @param name
-     */
-    public void setName(String name) {
-        this.name = name;
-    }
 
     /**
      * @return
@@ -86,6 +69,6 @@ public class ParticipatingEntity {
 
     @Override
     public String toString() {
-        return name + "/" + role;
+        return getUniqueName() + "/" + Utils.lowerCaseCleanName(role);
     }
 }

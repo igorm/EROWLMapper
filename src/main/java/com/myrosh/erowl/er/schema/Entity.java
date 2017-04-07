@@ -3,20 +3,13 @@ package com.myrosh.erowl.er.schema;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.lang3.StringUtils;
-
 /**
  * @author igorm
  *
  * Models an ER entity
  *
  */
-public class Entity {
-
-    /**
-     * Name
-     */
-    private String name;
+public class Entity extends Element {
 
     /**
      * Weak flag
@@ -32,20 +25,6 @@ public class Entity {
      * Attribute objects
      */
     private List<Attribute> attributes = new ArrayList<Attribute>();
-
-    /**
-     * @return
-     */
-    public String getName() {
-        return name;
-    }
-
-    /**
-     * @param name
-     */
-    public void setName(String name) {
-        this.name = name;
-    }
 
     /**
      * @return

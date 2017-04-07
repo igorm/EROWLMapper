@@ -166,11 +166,11 @@ public class Schema {
                 throw new InconsistentSchemaException("Every entity must have a name.");
             }
 
-            if (entityNames.contains(entity.getName())) {
+            if (entityNames.contains(entity.getUniqueName())) {
                 throw new InconsistentSchemaException("Entity " + entity.getName()
                     + " is a duplicate.");
             } else {
-                entityNames.add(entity.getName());
+                entityNames.add(entity.getUniqueName());
             }
 
             if (entity.isWeak()) {
@@ -196,11 +196,11 @@ public class Schema {
                 throw new InconsistentSchemaException("Every relationship must have a name.");
             }
 
-            if (relationshipNames.contains(relationship.getName())) {
+            if (relationshipNames.contains(relationship.getUniqueName())) {
                 throw new InconsistentSchemaException("Relationship " + relationship.getName()
                     + " is a duplicate.");
             } else {
-                relationshipNames.add(relationship.getName());
+                relationshipNames.add(relationship.getUniqueName());
             }
 
             if (relationship.getParticipatingEntities().size() < 2) {
@@ -227,7 +227,7 @@ public class Schema {
             }
 
             if (relationship.isIdentifying()) {
-                if (relationship.getParticipatingEntities().size() != 2) {
+                if (!relationship.isBinary()) {
                     throw new InconsistentSchemaException("Identifying relationship "
                         + relationship.getName() + " must have exactly 2 participating entities.");
                 }
@@ -253,6 +253,14 @@ public class Schema {
                 relationshipStrings.add(relationship.toString());
             }
 
+            if (((relationship.isBinary() && !relationship.getAttributes().isEmpty())
+                || relationship.isTernary())
+                && entityNames.contains(relationship.getUniqueName())
+            ) {
+                throw new InconsistentSchemaException("Relationship " + relationship.getName()
+                    + " cannot be named the same as an entity.");
+            }
+
             validateAttributes(relationship.getAttributes());
         }
 
@@ -275,11 +283,11 @@ public class Schema {
                 throw new InconsistentSchemaException("Every attribute must have a name.");
             }
 
-            if (attributeNames.contains(attribute.getName())) {
+            if (attributeNames.contains(attribute.getUniqueName())) {
                 throw new InconsistentSchemaException("Attribute " + attribute.getName()
                     + " is a duplicate.");
             } else {
-                attributeNames.add(attribute.getName());
+                attributeNames.add(attribute.getUniqueName());
             }
 
             if (attribute.isKey() && attribute.isMultivalued()) {
@@ -287,16 +295,21 @@ public class Schema {
                     + " cannot be multivalued.");
             }
 
+            if (attribute.isComposite() && entityNames.contains(attribute.getUniqueName())) {
+                throw new InconsistentSchemaException("Composite attribute " + attribute.getName()
+                    + " cannot be named the same as an entity.");
+            }
+
             for (Attribute componentAttribute : attribute.getComponentAttributes()) {
                 if (StringUtils.isBlank(componentAttribute.getName())) {
                     throw new InconsistentSchemaException("Every attribute must have a name.");
                 }
 
-                if (attributeNames.contains(componentAttribute.getName())) {
+                if (attributeNames.contains(componentAttribute.getUniqueName())) {
                     throw new InconsistentSchemaException(
                         "Attribute " + componentAttribute.getName() + " is a duplicate.");
                 } else {
-                    attributeNames.add(componentAttribute.getName());
+                    attributeNames.add(componentAttribute.getUniqueName());
                 }
 
                 if (componentAttribute.isKey()) {

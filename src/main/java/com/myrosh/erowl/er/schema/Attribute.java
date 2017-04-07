@@ -9,12 +9,7 @@ import java.util.List;
  * Models an ER entity/relationship/component attribute
  *
  */
-public class Attribute {
-
-    /**
-     * Name
-     */
-    private String name;
+public class Attribute extends Element {
 
     /**
      * Key flag
@@ -35,20 +30,6 @@ public class Attribute {
      * Component attribute objects
      */
     private List<Attribute> componentAttributes = new ArrayList<Attribute>();
-
-    /**
-     * @return
-     */
-    public String getName() {
-        return name;
-    }
-
-    /**
-     * @param name
-     */
-    public void setName(String name) {
-        this.name = name;
-    }
 
     /**
      * @return

@@ -18,8 +18,8 @@ import com.myrosh.erowl.er.schema.Entity;
 import com.myrosh.erowl.er.schema.ParticipatingEntity;
 import com.myrosh.erowl.er.schema.Relationship;
 import com.myrosh.erowl.er.schema.Schema;
-
 import com.myrosh.erowl.MappingException;
+import com.myrosh.erowl.Utils;
 
 /**
  * @author igorm
@@ -173,14 +173,14 @@ public class Mapper {
                 ParticipatingEntity bParticipatingEntity =
                     relationship.getParticipatingEntities().get(1);
 
-                String inversePropertiesBasename = capitalizeCleanName(
+                String inversePropertiesBasename = Utils.capitalizeCleanName(
                     StringUtils.isBlank(bParticipatingEntity.getRole())
                     ? bParticipatingEntity.getName()
                     : bParticipatingEntity.getRole()
                 );
 
                 addInverseObjectProperties(
-                    uncapitalizeCleanName(relationship.getName()),
+                    Utils.uncapitalizeCleanName(relationship.getName()),
                     inversePropertiesBasename,
                     "",
                     "is",
@@ -197,91 +197,18 @@ public class Mapper {
         }
     }
 
-    /**
-     * Mapping Rule 4. Map each binary relationship with attributes into a class with datatype
-     * properties corresponding to the relationship attributes and two pairs of inverse object
-     * properties between participating entity classes and the relationship class. Map participating
-     * entities’ cardinality into min and max cardinality restrictions or combine characteristics
-     * of a functional property with a min cardinality restriction for object properties pointing
-     * from participating entity classes to the relationship class. For their inverse object
-     * properties, min and max cardinality should be set to one.
-     */
     private void mapBinaryRelationshipsWithAttributes() throws MappingException {
         for (Relationship relationship : schema.getRelationships()) {
             if (!relationship.isIdentifying()
                 && relationship.isBinary()
                 && !relationship.getAttributes().isEmpty()
             ) {
-                ParticipatingEntity firstParticipatingEntity = relationship.getParticipatingEntities().get(0);
-                ParticipatingEntity secondParticipatingEntity = relationship.getParticipatingEntities().get(1);
+                ParticipatingEntity aParticipatingEntity =
+                    relationship.getParticipatingEntities().get(0);
+                ParticipatingEntity bParticipatingEntity =
+                    relationship.getParticipatingEntities().get(1);
 
-                String firstEntityClassName = firstParticipatingEntity.getName();
-                String secondEntityClassName = secondParticipatingEntity.getName();
-                String relationshipClassName = firstParticipatingEntity.getName()
-                    + secondParticipatingEntity.getName();
 
-                OntClass firstEntityClass = model.getOntClass(NS + firstEntityClassName);
-                OntClass secondEntityClass = model.getOntClass(NS + secondEntityClassName);
-                OntClass relationshipClass = model.createClass(NS + relationshipClassName);
-
-                for (Attribute attribute : relationship.getAttributes()) {
-                    DatatypeProperty attributeProperty = model.createDatatypeProperty(
-                        NS + attribute.getName(), true);
-                    attributeProperty.addDomain(relationshipClass);
-                    attributeProperty.addRange(XSD.xstring);
-                }
-
-                // Create the first-to-relationship objectproperty
-                ObjectProperty firstEntityHasRelationshipsProperty = model.createObjectProperty(
-                    NS + StringUtils.uncapitalize(firstEntityClassName) + "Has" + relationshipClassName);
-                firstEntityHasRelationshipsProperty.addDomain(firstEntityClass);
-                firstEntityHasRelationshipsProperty.addRange(relationshipClass);
-
-                if (firstParticipatingEntity.getMin() == 1) {
-                    firstEntityClass.addSuperClass(model.createMinCardinalityRestriction(
-                        null, firstEntityHasRelationshipsProperty, 1));
-                }
-
-                if (firstParticipatingEntity.getMax() == 1) {
-                    firstEntityClass.addSuperClass(model.createMaxCardinalityRestriction(
-                        null, firstEntityHasRelationshipsProperty, 1));
-                }
-
-                // Create the relationship-to-first functional objectproperty with min and max cardinality 1
-                ObjectProperty isRelationshipOfFirstEntityProperty = model.createObjectProperty(
-                    NS + "is" + relationshipClassName + "Of" + firstEntityClassName, true);
-                isRelationshipOfFirstEntityProperty.addDomain(relationshipClass);
-                isRelationshipOfFirstEntityProperty.addRange(firstEntityClass);
-                relationshipClass.addSuperClass(model.createMinCardinalityRestriction(
-                    null, isRelationshipOfFirstEntityProperty, 1));
-                isRelationshipOfFirstEntityProperty.addInverseOf(firstEntityHasRelationshipsProperty);
-
-                // Create the second-to-relationship objectproperty
-                ObjectProperty secondEntityHasRelationshipsProperty = model.createObjectProperty(
-                    NS + StringUtils.uncapitalize(secondEntityClassName) + "Has" + relationshipClassName);
-                secondEntityHasRelationshipsProperty.addDomain(secondEntityClass);
-                secondEntityHasRelationshipsProperty.addRange(relationshipClass);
-
-                if (secondParticipatingEntity.getMin() == 1) {
-                    secondEntityClass.addSuperClass(model.createMinCardinalityRestriction(
-                        null, secondEntityHasRelationshipsProperty, 1));
-                }
-
-                if (secondParticipatingEntity.getMax() == 1) {
-                    secondEntityClass.addSuperClass(model.createMaxCardinalityRestriction(
-                        null, secondEntityHasRelationshipsProperty, 1));
-                }
-
-                // Create the relationship-to-second functional objectproperty with min and max cardinality 1
-                ObjectProperty isRelationshipOfSecondEntityProperty = model.createObjectProperty(
-                    NS + "is" + relationshipClassName + "Of" + secondEntityClassName, true);
-                isRelationshipOfSecondEntityProperty.addDomain(relationshipClass);
-                isRelationshipOfSecondEntityProperty.addRange(secondEntityClass);
-                relationshipClass.addSuperClass(model.createMinCardinalityRestriction(
-                    null, isRelationshipOfSecondEntityProperty, 1));
-                relationshipClass.addSuperClass(model.createMaxCardinalityRestriction(
-                    null, isRelationshipOfSecondEntityProperty, 1));
-                isRelationshipOfSecondEntityProperty.addInverseOf(secondEntityHasRelationshipsProperty);
             }
         }
     }
@@ -502,7 +429,7 @@ public class Mapper {
         boolean isFunctional,
         boolean isMinCardinalityOne
     ) throws MappingException {
-        String name = prefix + capitalizeCleanName(basename) + suffix;
+        String name = prefix + Utils.capitalizeCleanName(basename) + suffix;
         String uri = NS + name;
 
         if (model.getObjectProperty(uri) != null) {
@@ -533,7 +460,7 @@ public class Mapper {
         boolean isFunctional,
         boolean isMinCardinalityOne
     ) throws MappingException {
-        String name = "has" + capitalizeCleanName(basename);
+        String name = "has" + Utils.capitalizeCleanName(basename);
         String uri = NS + name;
 
         if (model.getDatatypeProperty(uri) != null) {
@@ -552,7 +479,7 @@ public class Mapper {
     }
 
     private OntClass addClass(String name) throws MappingException {
-        name = capitalizeCleanName(name);
+        name = Utils.capitalizeCleanName(name);
         String uri = NS + name;
 
         if (model.getOntClass(uri) != null) {
@@ -563,7 +490,7 @@ public class Mapper {
     }
 
     private OntClass getClass(String name) throws MappingException {
-        name = capitalizeCleanName(name);
+        name = Utils.capitalizeCleanName(name);
         String uri = NS + name;
 
         OntClass clazz = model.getOntClass(uri);
@@ -573,17 +500,5 @@ public class Mapper {
         }
 
         return clazz;
-    }
-
-    public static String capitalizeCleanName(String name) {
-        return StringUtils.capitalize(cleanName(name));
-    }
-
-    public static String uncapitalizeCleanName(String name) {
-        return StringUtils.uncapitalize(cleanName(name));
-    }
-
-    public static String cleanName(String name) {
-        return name.replaceAll("[^\\p{L}\\p{Nd}]+", "");
     }
 }
