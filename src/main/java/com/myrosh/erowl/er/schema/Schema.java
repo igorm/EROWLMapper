@@ -182,7 +182,7 @@ public class Schema {
     public void validate() throws InconsistentSchemaException {
         for (Entity entity : entities) {
             if (StringUtils.isBlank(entity.getUniqueName())) {
-                throw new InconsistentSchemaException("Every entity must have a name.");
+                throw new InconsistentSchemaException("Every Entity must have a name.");
             }
 
             if (entityNames.contains(entity.getUniqueName())) {
@@ -199,40 +199,40 @@ public class Schema {
 
                 if (getStrongEntity(entity.getOwnerName()) == null) {
                     throw new InconsistentSchemaException("Weak " + entity
-                        + " refers to owner entity " + entity.getOwnerName()
-                        + " which does not exist or is not a strong entity.");
+                        + " refers to owner Entity(" + entity.getOwnerName() + ")"
+                        + " which does not exist or is not a strong Entity.");
                 }
             }
         }
 
         for (Relationship relationship : relationships) {
             if (StringUtils.isBlank(relationship.getUniqueName())) {
-                throw new InconsistentSchemaException("Every relationship must have a name.");
+                throw new InconsistentSchemaException("Every Relationship must have a name.");
             }
 
             if (relationshipNames.contains(relationship.getUniqueName())) {
-                throw new InconsistentSchemaException("Relationship("
-                    + relationship.getUniqueName() + ") is a duplicate.");
+                throw new InconsistentSchemaException(
+                    "Relationship(" + relationship.getUniqueName() + ") is a duplicate.");
             } else {
                 relationshipNames.add(relationship.getUniqueName());
             }
 
             if (relationship.getParticipatingEntities().size() < 2) {
-                throw new InconsistentSchemaException("Relationship("
-                    + relationship.getUniqueName()
-                    + ") must have at least 2 participating entities.");
+                throw new InconsistentSchemaException(
+                    "Relationship(" + relationship.getUniqueName() + ")"
+                    + " must have at least 2 participating entities.");
             }
 
             if (relationship.getParticipatingEntities().size() > 3) {
-                throw new InconsistentSchemaException("Relationship("
-                    + relationship.getUniqueName()
-                    + ") cannot have more than 3 participating entities.");
+                throw new InconsistentSchemaException(
+                    "Relationship(" + relationship.getUniqueName() + ")"
+                    + " cannot have more than 3 participating entities.");
             }
 
             for (ParticipatingEntity participatingEntity : relationship.getParticipatingEntities()) {
                 if (StringUtils.isBlank(participatingEntity.getUniqueName())) {
                     throw new InconsistentSchemaException(
-                        "Every participating entity must have a name.");
+                        "Every ParticipatingEntity must have a name.");
                 }
 
                 if (getEntity(participatingEntity.getName()) == null) {
@@ -253,9 +253,9 @@ public class Schema {
 
             if (relationship.isIdentifying()) {
                 if (!relationship.isBinary()) {
-                    throw new InconsistentSchemaException("Identifying Relationship("
-                        + relationship.getUniqueName() + ")"
-                        + " must have exactly 2 participating entities.");
+                    throw new InconsistentSchemaException(
+                        "Identifying Relationship(" + relationship.getUniqueName() + ")"
+                        + " must have exactly 2 ParticipatingEntities.");
                 }
 
                 List<ParticipatingEntity> participatingEntities =
@@ -266,15 +266,16 @@ public class Schema {
                 if (!((aEntity.isStrong() && bEntity.isWeak())
                     || (aEntity.isWeak() && bEntity.isStrong()))
                 ) {
-                    throw new InconsistentSchemaException("Identifying Relationship("
-                        + relationship.getUniqueName() + ") must have 1 strong participating entity"
-                        + " and 1 weak participating entity.");
+                    throw new InconsistentSchemaException(
+                        "Identifying Relationship(" + relationship.getUniqueName() + ")"
+                        + " must have 1 strong ParticipatingEntity"
+                        + " and 1 weak ParticipatingEntity.");
                 }
             }
 
             if (relationshipStrings.contains(relationship.toString())) {
                 throw new InconsistentSchemaException(relationship
-                    + " is a duplicate based on its participating entities and their roles.");
+                    + " is a duplicate based on its ParticipatingEntities and their roles.");
             } else {
                 relationshipStrings.add(relationship.toString());
             }
@@ -283,7 +284,7 @@ public class Schema {
         for (Entity entity : getWeakEntities()) {
             if (getIdentifyingRelationships(entity.getName()).size() != 1) {
                 throw new InconsistentSchemaException("Weak " + entity
-                    + " must have exactly 1 identifying relationship with a strong entity.");
+                    + " must have exactly 1 identifying Relationship with a strong Entity.");
             }
         }
 
@@ -304,7 +305,7 @@ public class Schema {
     public void validateAttributes(List<Attribute> attributes) throws InconsistentSchemaException {
         for (Attribute attribute : attributes) {
             if (StringUtils.isBlank(attribute.getUniqueName())) {
-                throw new InconsistentSchemaException("Every attribute must have a name.");
+                throw new InconsistentSchemaException("Every Attribute must have a name.");
             }
 
             if (attributeNames.contains(attribute.getUniqueName())) {
@@ -325,12 +326,11 @@ public class Schema {
 
             for (Attribute componentAttribute : attribute.getComponentAttributes()) {
                 if (StringUtils.isBlank(componentAttribute.getUniqueName())) {
-                    throw new InconsistentSchemaException("Every attribute must have a name.");
+                    throw new InconsistentSchemaException("Every Attribute must have a name.");
                 }
 
                 if (attributeNames.contains(componentAttribute.getUniqueName())) {
-                    throw new InconsistentSchemaException(
-                        componentAttribute + " is a duplicate.");
+                    throw new InconsistentSchemaException(componentAttribute + " is a duplicate.");
                 } else {
                     attributeNames.add(componentAttribute.getUniqueName());
                 }

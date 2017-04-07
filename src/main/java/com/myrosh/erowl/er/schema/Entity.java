@@ -113,9 +113,4 @@ public class Entity extends Element {
     public void addAttribute(Attribute attribute) {
         attributes.add(attribute);
     }
-
-    @Override
-    public String toString() {
-        return getClass().getSimpleName() + "(" + getUniqueName() + ")";
-    }
 }

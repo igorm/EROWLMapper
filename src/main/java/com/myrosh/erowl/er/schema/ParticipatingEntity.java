@@ -71,9 +71,7 @@ public class ParticipatingEntity extends Element {
 
     @Override
     public String toString() {
-        return getClass().getSimpleName() + "("
-            + getUniqueName()
-            + (StringUtils.isBlank(role) ? "" : "/" + Utils.lowerCaseCleanName(role))
-        + ")";
+        return getClass().getSimpleName() + "(" + getUniqueName()
+            + (StringUtils.isBlank(role) ? "" : "/" + Utils.lowerCaseCleanName(role)) + ")";
     }
 }
