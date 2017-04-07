@@ -3,6 +3,8 @@ package com.myrosh.erowl.er.schema;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.myrosh.erowl.Utils;
+
 /**
  * @author igorm
  *
@@ -55,6 +57,13 @@ public class Entity extends Element {
     }
 
     /**
+     * @return
+     */
+    public String getUniqueOwnerName() {
+        return Utils.lowerCaseCleanName(ownerName);
+    }
+
+    /**
      * @param ownerName
      */
     public void setOwnerName(String ownerName) {
@@ -103,5 +112,10 @@ public class Entity extends Element {
      */
     public void addAttribute(Attribute attribute) {
         attributes.add(attribute);
+    }
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName() + "(" + getUniqueName() + ")";
     }
 }

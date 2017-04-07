@@ -7,6 +7,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import org.apache.jena.ontology.DatatypeProperty;
 import org.apache.jena.ontology.ObjectProperty;
+import org.apache.jena.ontology.OntProperty;
 import org.apache.jena.ontology.OntClass;
 import org.apache.jena.ontology.OntModel;
 import org.apache.jena.ontology.OntModelSpec;
@@ -453,6 +454,10 @@ public class Mapper {
 
         if (inverseOfProperty != null) {
             property.addInverseOf(inverseOfProperty);
+
+            if (property.isFunctionalProperty()) {
+                ((OntProperty)inverseOfProperty).convertToInverseFunctionalProperty();
+            }
         }
 
         if (isMinCardinalityOne) {

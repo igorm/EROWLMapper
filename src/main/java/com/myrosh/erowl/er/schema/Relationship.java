@@ -116,6 +116,7 @@ public class Relationship extends Element {
 
         Collections.sort(participatingEntityStrings);
 
-        return StringUtils.join(participatingEntityStrings, ',');
+        return getClass().getSimpleName() + "("
+            + StringUtils.join(participatingEntityStrings, ',') + ")";
     }
 }

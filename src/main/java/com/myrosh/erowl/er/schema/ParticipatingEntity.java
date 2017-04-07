@@ -1,5 +1,7 @@
 package com.myrosh.erowl.er.schema;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.myrosh.erowl.Utils;
 
 /**
@@ -69,6 +71,9 @@ public class ParticipatingEntity extends Element {
 
     @Override
     public String toString() {
-        return getUniqueName() + "/" + Utils.lowerCaseCleanName(role);
+        return getClass().getSimpleName() + "("
+            + getUniqueName()
+            + (StringUtils.isBlank(role) ? "" : "/" + Utils.lowerCaseCleanName(role))
+        + ")";
     }
 }

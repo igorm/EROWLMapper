@@ -86,4 +86,9 @@ public class Attribute extends Element {
     public void addComponentAttribute(Attribute attribute) {
         componentAttributes.add(attribute);
     }
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName() + "(" + getUniqueName() + ")";
+    }
 }
