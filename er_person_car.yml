@@ -40,11 +40,13 @@ relationships:
                 role: Vehicle
     -
         name: Races
+        # attributes:
+        #     -
+        #         name: racetrack
         participatingEntities:
             -
                 name: Person
-                role: Racer
-                min: 1
+                # role: Racer
             -
                 name: Car
-                role: Racecar
+                # role: Racecar

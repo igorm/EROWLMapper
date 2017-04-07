@@ -23,6 +23,6 @@ public class Utils
     }
 
     public static String cleanName(String name) {
-        return name.replaceAll("[^\\p{L}\\p{Nd}]+", "");
+        return StringUtils.isBlank(name) ? "" : name.replaceAll("[^\\p{L}\\p{Nd}]+", "");
     }
 }

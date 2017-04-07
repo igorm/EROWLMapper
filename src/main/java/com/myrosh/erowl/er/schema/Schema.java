@@ -253,13 +253,13 @@ public class Schema {
                 relationshipStrings.add(relationship.toString());
             }
 
-            if (((relationship.isBinary() && !relationship.getAttributes().isEmpty())
-                || relationship.isTernary())
-                && entityNames.contains(relationship.getUniqueName())
-            ) {
-                throw new InconsistentSchemaException("Relationship " + relationship.getName()
-                    + " cannot be named the same as an entity.");
-            }
+            // if (((relationship.isBinary() && !relationship.getAttributes().isEmpty())
+            //     || relationship.isTernary())
+            //     && entityNames.contains(relationship.getUniqueName())
+            // ) {
+            //     throw new InconsistentSchemaException("Relationship " + relationship.getName()
+            //         + " cannot be named the same as an entity.");
+            // }
 
             validateAttributes(relationship.getAttributes());
         }

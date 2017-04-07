@@ -144,18 +144,24 @@ public class Mapper {
                     + entity.getOwnerName() + ".");
             }
 
-            ParticipatingEntity ownerParticipatingEntity =
+            ParticipatingEntity aParticipatingEntity =
                 relationship.getParticipatingEntity(entity.getOwnerName());
+            ParticipatingEntity bParticipatingEntity =
+                relationship.getParticipatingEntity(entity.getName());
 
-            OntClass ownerEntityClass = getClass(entity.getOwnerName());
-            OntClass weakEntityClass = mapEntity(entity);
+            OntClass aClass = getClass(entity.getOwnerName());
+            OntClass bClass = mapEntity(entity);
 
             addHasIsOfObjectProperties(
-                weakEntityClass.getLocalName(),
-                ownerEntityClass,
-                weakEntityClass,
-                (ownerParticipatingEntity.getMax() == 1),
-                (ownerParticipatingEntity.getMin() == 1),
+                Utils.capitalizeCleanName(
+                    StringUtils.isBlank(bParticipatingEntity.getRole())
+                    ? bParticipatingEntity.getName()
+                    : bParticipatingEntity.getRole()
+                ),
+                aClass,
+                bClass,
+                (aParticipatingEntity.getMax() == 1),
+                (aParticipatingEntity.getMin() == 1),
                 true,
                 true
             );
@@ -173,19 +179,21 @@ public class Mapper {
                 ParticipatingEntity bParticipatingEntity =
                     relationship.getParticipatingEntities().get(1);
 
-                String inversePropertiesBasename = Utils.capitalizeCleanName(
-                    StringUtils.isBlank(bParticipatingEntity.getRole())
-                    ? bParticipatingEntity.getName()
-                    : bParticipatingEntity.getRole()
-                );
-
                 addInverseObjectProperties(
-                    Utils.uncapitalizeCleanName(relationship.getName()),
-                    inversePropertiesBasename,
+                    "has",
+                    Utils.capitalizeCleanName(
+                        StringUtils.isBlank(bParticipatingEntity.getRole())
+                        ? bParticipatingEntity.getName()
+                        : bParticipatingEntity.getRole()
+                    ),
                     "",
-                    "is",
-                    inversePropertiesBasename,
-                    "Of",
+                    "has",
+                    Utils.capitalizeCleanName(
+                        StringUtils.isBlank(aParticipatingEntity.getRole())
+                        ? aParticipatingEntity.getName()
+                        : aParticipatingEntity.getRole()
+                    ),
+                    "",
                     getClass(aParticipatingEntity.getName()),
                     getClass(bParticipatingEntity.getName()),
                     (aParticipatingEntity.getMax() == 1),
