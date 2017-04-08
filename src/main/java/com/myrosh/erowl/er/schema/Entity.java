@@ -18,6 +18,7 @@ public class Entity extends Element {
      */
     private boolean weak = false;
 
+    // TODO THIS IS SO GONE!
     /**
      * Owner name
      */

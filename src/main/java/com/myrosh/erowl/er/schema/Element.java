@@ -37,6 +37,25 @@ public abstract class Element {
     }
 
     @Override
+    public boolean equals(Object that) {
+        if (this == that) {
+            return true;
+        }
+
+        if (that == null) {
+            return false;
+        }
+
+        if (getClass() != that.getClass()) {
+            return false;
+        }
+
+        Element element = (Element)that;
+
+        return getUniqueName().equals(element.getUniqueName());
+    }
+
+    @Override
     public String toString() {
         return getClass().getSimpleName() + "(" + getUniqueName() + ")";
     }

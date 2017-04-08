@@ -34,10 +34,10 @@ relationships:
             -
                 name: Person
                 role: Driver
-                min: 1
             -
                 name: Car
                 role: Vehicle
+                min: 1
     -
         name: Races
         # attributes:
@@ -46,7 +46,7 @@ relationships:
         participatingEntities:
             -
                 name: Person
-                # role: Racer
+                role: Racer
             -
                 name: Car
-                # role: Racecar
+                role: Racecar

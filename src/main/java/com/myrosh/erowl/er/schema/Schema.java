@@ -27,6 +27,15 @@ public class Schema {
      */
     private List<Relationship> relationships = new ArrayList<Relationship>();
 
+
+
+    Set<Entity> uniqueEntities = new HashSet<Entity>();
+    Set<Relationship> uniqueRelationships = new HashSet<Relationship>();
+    Set<ParticipatingEntity> uniqueParticipatingEntities = new HashSet<ParticipatingEntity>();
+    Set<Attribute> uniqueAttributes = new HashSet<Attribute>();
+
+
+
     /**
      * Unique entity names
      */
@@ -41,11 +50,6 @@ public class Schema {
      * Unique relationship names
      */
     Set<String> relationshipNames = new HashSet<String>();
-
-    /**
-     * Unique relationship string representations
-     */
-    Set<String> relationshipStrings = new HashSet<String>();
 
     /**
      * Unique participating entity string representations
@@ -211,21 +215,18 @@ public class Schema {
             }
 
             if (relationshipNames.contains(relationship.getUniqueName())) {
-                throw new InconsistentSchemaException(
-                    "Relationship(" + relationship.getUniqueName() + ") is a duplicate.");
+                throw new InconsistentSchemaException(relationship + " is a duplicate.");
             } else {
                 relationshipNames.add(relationship.getUniqueName());
             }
 
             if (relationship.getParticipatingEntities().size() < 2) {
-                throw new InconsistentSchemaException(
-                    "Relationship(" + relationship.getUniqueName() + ")"
+                throw new InconsistentSchemaException(relationship
                     + " must have at least 2 participating entities.");
             }
 
             if (relationship.getParticipatingEntities().size() > 3) {
-                throw new InconsistentSchemaException(
-                    "Relationship(" + relationship.getUniqueName() + ")"
+                throw new InconsistentSchemaException(relationship
                     + " cannot have more than 3 participating entities.");
             }
 
@@ -237,15 +238,14 @@ public class Schema {
 
                 if (getEntity(participatingEntity.getName()) == null) {
                     throw new InconsistentSchemaException(participatingEntity
-                        + " in Relationship(" + relationship.getUniqueName() + ")"
+                        + " in " + relationship
                         + " refers to Entity(" + participatingEntity.getName() + ")"
                         + " which does not exist.");
                 }
 
                 if (participatingEntityStrings.contains(participatingEntity.toString())) {
                     throw new InconsistentSchemaException(participatingEntity
-                        + " in Relationship(" + relationship.getUniqueName()+ ")"
-                        + " is a duplicate. Please specify a role.");
+                        + " in " + relationship + " is a duplicate.");
                 } else {
                     participatingEntityStrings.add(participatingEntity.toString());
                 }
@@ -253,8 +253,7 @@ public class Schema {
 
             if (relationship.isIdentifying()) {
                 if (!relationship.isBinary()) {
-                    throw new InconsistentSchemaException(
-                        "Identifying Relationship(" + relationship.getUniqueName() + ")"
+                    throw new InconsistentSchemaException("Identifying " + relationship
                         + " must have exactly 2 ParticipatingEntities.");
                 }
 
@@ -266,18 +265,10 @@ public class Schema {
                 if (!((aEntity.isStrong() && bEntity.isWeak())
                     || (aEntity.isWeak() && bEntity.isStrong()))
                 ) {
-                    throw new InconsistentSchemaException(
-                        "Identifying Relationship(" + relationship.getUniqueName() + ")"
+                    throw new InconsistentSchemaException("Identifying " + relationship
                         + " must have 1 strong ParticipatingEntity"
                         + " and 1 weak ParticipatingEntity.");
                 }
-            }
-
-            if (relationshipStrings.contains(relationship.toString())) {
-                throw new InconsistentSchemaException(relationship
-                    + " is a duplicate based on its ParticipatingEntities and their roles.");
-            } else {
-                relationshipStrings.add(relationship.toString());
             }
         }
 

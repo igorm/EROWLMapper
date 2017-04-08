@@ -35,6 +35,13 @@ public class ParticipatingEntity extends Element {
     }
 
     /**
+     * @return
+     */
+    public String getUniqueRole() {
+        return Utils.lowerCaseCleanName(role);
+    }
+
+    /**
      * @param role
      */
     public void setRole(String role) {
@@ -72,6 +79,6 @@ public class ParticipatingEntity extends Element {
     @Override
     public String toString() {
         return getClass().getSimpleName() + "(" + getUniqueName()
-            + (StringUtils.isBlank(role) ? "" : "/" + Utils.lowerCaseCleanName(role)) + ")";
+            + (StringUtils.isBlank(role) ? "" : "/" + getUniqueRole()) + ")";
     }
 }
