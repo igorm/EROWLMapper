@@ -266,7 +266,7 @@ public class Schema {
         for (Entity entity : getWeakEntities()) {
             if (getIdentifyingRelationships(entity.getName()).size() != 1) {
                 throw new InconsistentSchemaException("Weak " + entity
-                    + " must have exactly 1 identifying Relationship with a strong Entity.");
+                    + " must have exactly 1 binary identifying Relationship with a strong Entity.");
             }
         }
 

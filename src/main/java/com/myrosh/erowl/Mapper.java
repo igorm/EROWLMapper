@@ -136,21 +136,20 @@ public class Mapper {
 
     private void mapWeakEntitiesAndIdentifyingRelationships() throws MappingException {
         for (Entity entity : schema.getWeakEntities()) {
-            Relationship relationship = schema.getIdentifyingRelationship(
-                entity.getOwnerName(), entity.getName());
+            Relationship relationship = schema.getIdentifyingRelationships(entity.getName()).get(0);
 
-            if (relationship == null) {
-                throw new MappingException("There is no identifying relationship between weak"
-                    + " entity " + entity.getName() + " and strong entity "
-                    + entity.getOwnerName() + ".");
-            }
-
-            ParticipatingEntity aParticipatingEntity =
-                relationship.getParticipatingEntity(entity.getOwnerName());
+            ParticipatingEntity aParticipatingEntity = null;
             ParticipatingEntity bParticipatingEntity =
                 relationship.getParticipatingEntity(entity.getName());
 
-            OntClass aClass = getClass(entity.getOwnerName());
+            for (ParticipatingEntity participatingEntity : relationship.getParticipatingEntities()) {
+                if (!participatingEntity.getName().equals(entity.getName())) {
+                    aParticipatingEntity = participatingEntity;
+                    break;
+                }
+            }
+
+            OntClass aClass = getClass(aParticipatingEntity.getName());
             OntClass bClass = mapEntity(entity);
 
             addHasIsOfObjectProperties(
@@ -188,13 +187,13 @@ public class Mapper {
                         : bParticipatingEntity.getRole()
                     ),
                     "",
-                    "has",
+                    "is",
                     Utils.capitalizeCleanName(
                         StringUtils.isBlank(aParticipatingEntity.getRole())
                         ? aParticipatingEntity.getName()
                         : aParticipatingEntity.getRole()
                     ),
-                    "",
+                    "Of",
                     getClass(aParticipatingEntity.getName()),
                     getClass(bParticipatingEntity.getName()),
                     (aParticipatingEntity.getMax() == 1),
