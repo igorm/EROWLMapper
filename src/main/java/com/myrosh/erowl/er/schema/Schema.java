@@ -27,34 +27,25 @@ public class Schema {
      */
     private List<Relationship> relationships = new ArrayList<Relationship>();
 
-
-
-    Set<Entity> uniqueEntities = new HashSet<Entity>();
-    Set<Relationship> uniqueRelationships = new HashSet<Relationship>();
-    Set<ParticipatingEntity> uniqueParticipatingEntities = new HashSet<ParticipatingEntity>();
-    Set<Attribute> uniqueAttributes = new HashSet<Attribute>();
-
-
-
     /**
-     * Unique entity names
+     * Unique entities
      */
-    Set<String> entityNames = new HashSet<String>();
-
-    /**
-     * Unique attribute names
-     */
-    Set<String> attributeNames = new HashSet<String>();
+    private Set<Entity> uniqueEntities = new HashSet<Entity>();
 
     /**
      * Unique relationship names
      */
-    Set<String> relationshipNames = new HashSet<String>();
+    private Set<Relationship> uniqueRelationships = new HashSet<Relationship>();
 
     /**
-     * Unique participating entity string representations
+     * Unique participating entities
      */
-    Set<String> participatingEntityStrings = new HashSet<String>();
+    private Set<ParticipatingEntity> uniqueParticipatingEntities = new HashSet<ParticipatingEntity>();
+
+    /**
+     * Unique attributes
+     */
+    private Set<Attribute> uniqueAttributes = new HashSet<Attribute>();
 
     /**
      * @return
@@ -117,6 +108,19 @@ public class Schema {
         }
 
         return weakEntities;
+    }
+
+    /**
+     * @return
+     */
+    public Entity getWeakEntity(String name) {
+        for (Entity entity : getWeakEntities()) {
+            if (entity.getName().equals(name)) {
+                return entity;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -189,23 +193,10 @@ public class Schema {
                 throw new InconsistentSchemaException("Every Entity must have a name.");
             }
 
-            if (entityNames.contains(entity.getUniqueName())) {
+            if (uniqueEntities.contains(entity)) {
                 throw new InconsistentSchemaException(entity + " is a duplicate.");
             } else {
-                entityNames.add(entity.getUniqueName());
-            }
-
-            if (entity.isWeak()) {
-                if (StringUtils.isBlank(entity.getUniqueOwnerName())) {
-                    throw new InconsistentSchemaException("Weak " + entity
-                        + " must have an owner name.");
-                }
-
-                if (getStrongEntity(entity.getOwnerName()) == null) {
-                    throw new InconsistentSchemaException("Weak " + entity
-                        + " refers to owner Entity(" + entity.getOwnerName() + ")"
-                        + " which does not exist or is not a strong Entity.");
-                }
+                uniqueEntities.add(entity);
             }
         }
 
@@ -214,20 +205,20 @@ public class Schema {
                 throw new InconsistentSchemaException("Every Relationship must have a name.");
             }
 
-            if (relationshipNames.contains(relationship.getUniqueName())) {
+            if (uniqueRelationships.contains(relationship)) {
                 throw new InconsistentSchemaException(relationship + " is a duplicate.");
             } else {
-                relationshipNames.add(relationship.getUniqueName());
+                uniqueRelationships.add(relationship);
             }
 
             if (relationship.getParticipatingEntities().size() < 2) {
                 throw new InconsistentSchemaException(relationship
-                    + " must have at least 2 participating entities.");
+                    + " must have at least 2 ParticipatingEntities.");
             }
 
             if (relationship.getParticipatingEntities().size() > 3) {
                 throw new InconsistentSchemaException(relationship
-                    + " cannot have more than 3 participating entities.");
+                    + " cannot have more than 3 ParticipatingEntities.");
             }
 
             for (ParticipatingEntity participatingEntity : relationship.getParticipatingEntities()) {
@@ -236,18 +227,18 @@ public class Schema {
                         "Every ParticipatingEntity must have a name.");
                 }
 
+                if (uniqueParticipatingEntities.contains(participatingEntity)) {
+                    throw new InconsistentSchemaException(participatingEntity
+                        + " in " + relationship + " is a duplicate.");
+                } else {
+                    uniqueParticipatingEntities.add(participatingEntity);
+                }
+
                 if (getEntity(participatingEntity.getName()) == null) {
                     throw new InconsistentSchemaException(participatingEntity
                         + " in " + relationship
                         + " refers to Entity(" + participatingEntity.getName() + ")"
                         + " which does not exist.");
-                }
-
-                if (participatingEntityStrings.contains(participatingEntity.toString())) {
-                    throw new InconsistentSchemaException(participatingEntity
-                        + " in " + relationship + " is a duplicate.");
-                } else {
-                    participatingEntityStrings.add(participatingEntity.toString());
                 }
             }
 
@@ -299,10 +290,10 @@ public class Schema {
                 throw new InconsistentSchemaException("Every Attribute must have a name.");
             }
 
-            if (attributeNames.contains(attribute.getUniqueName())) {
+            if (uniqueAttributes.contains(attribute)) {
                 throw new InconsistentSchemaException(attribute + " is a duplicate.");
             } else {
-                attributeNames.add(attribute.getUniqueName());
+                uniqueAttributes.add(attribute);
             }
 
             if (attribute.isKey() && attribute.isMultivalued()) {
@@ -310,9 +301,13 @@ public class Schema {
                     + " cannot be multivalued.");
             }
 
-            if (attribute.isComposite() && entityNames.contains(attribute.getUniqueName())) {
-                throw new InconsistentSchemaException("Composite " + attribute
-                    + " cannot have the same name as an entity.");
+            if (attribute.isComposite()) {
+                for (Entity entity : uniqueEntities) {
+                    if (entity.getUniqueName().equals(attribute.getUniqueName())) {
+                        throw new InconsistentSchemaException("Composite " + attribute
+                            + " cannot have the same name as " + entity + ".");
+                    }
+                }
             }
 
             for (Attribute componentAttribute : attribute.getComponentAttributes()) {
@@ -320,10 +315,10 @@ public class Schema {
                     throw new InconsistentSchemaException("Every Attribute must have a name.");
                 }
 
-                if (attributeNames.contains(componentAttribute.getUniqueName())) {
+                if (uniqueAttributes.contains(componentAttribute)) {
                     throw new InconsistentSchemaException(componentAttribute + " is a duplicate.");
                 } else {
-                    attributeNames.add(componentAttribute.getUniqueName());
+                    uniqueAttributes.add(componentAttribute);
                 }
 
                 if (componentAttribute.isKey()) {

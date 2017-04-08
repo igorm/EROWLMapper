@@ -1,5 +1,7 @@
 package com.myrosh.erowl.er.schema;
 
+import java.util.Objects;
+
 import com.myrosh.erowl.Utils;
 
 /**
@@ -53,6 +55,11 @@ public abstract class Element {
         Element element = (Element)that;
 
         return getUniqueName().equals(element.getUniqueName());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getUniqueName());
     }
 
     @Override

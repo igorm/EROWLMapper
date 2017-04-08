@@ -1,5 +1,7 @@
 package com.myrosh.erowl.er.schema;
 
+import java.util.Objects;
+
 import org.apache.commons.lang3.StringUtils;
 
 import com.myrosh.erowl.Utils;
@@ -74,6 +76,31 @@ public class ParticipatingEntity extends Element {
      */
     public void setMax(int max) {
         this.max = max;
+    }
+
+    @Override
+    public boolean equals(Object that) {
+        if (this == that) {
+            return true;
+        }
+
+        if (that == null) {
+            return false;
+        }
+
+        if (getClass() != that.getClass()) {
+            return false;
+        }
+
+        ParticipatingEntity participatingEntity = (ParticipatingEntity)that;
+
+        return getUniqueName().equals(participatingEntity.getUniqueName())
+            && getUniqueRole().equals(participatingEntity.getUniqueRole());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getUniqueName(), getUniqueRole());
     }
 
     @Override

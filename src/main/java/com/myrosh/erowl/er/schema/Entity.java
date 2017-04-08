@@ -18,12 +18,6 @@ public class Entity extends Element {
      */
     private boolean weak = false;
 
-    // TODO THIS IS SO GONE!
-    /**
-     * Owner name
-     */
-    private String ownerName;
-
     /**
      * Attribute objects
      */
@@ -48,27 +42,6 @@ public class Entity extends Element {
      */
     public void setWeak(boolean weak) {
         this.weak = weak;
-    }
-
-    /**
-     * @return
-     */
-    public String getOwnerName() {
-        return ownerName;
-    }
-
-    /**
-     * @return
-     */
-    public String getUniqueOwnerName() {
-        return Utils.lowerCaseCleanName(ownerName);
-    }
-
-    /**
-     * @param ownerName
-     */
-    public void setOwnerName(String ownerName) {
-        this.ownerName = ownerName;
     }
 
     /**
