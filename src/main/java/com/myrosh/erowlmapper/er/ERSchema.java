@@ -1,13 +1,11 @@
-package com.myrosh.erowl.er.schema;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.HashSet;
-import java.util.Set;
+package com.myrosh.erowlmapper.er;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.myrosh.erowl.er.InconsistentSchemaException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author igorm
@@ -15,50 +13,50 @@ import com.myrosh.erowl.er.InconsistentSchemaException;
  * Models an ER schema
  *
  */
-public class Schema {
+public class ERSchema {
 
     /**
-     * Entity objects
+     * EREntity objects
      */
-    private List<Entity> entities = new ArrayList<Entity>();
+    private List<EREntity> entities = new ArrayList<EREntity>();
 
     /**
-     * Relationship objects
+     * ERRelationship objects
      */
-    private List<Relationship> relationships = new ArrayList<Relationship>();
+    private List<ERRelationship> relationships = new ArrayList<ERRelationship>();
 
     /**
      * Unique entities
      */
-    private Set<Entity> uniqueEntities = new HashSet<Entity>();
+    private Set<EREntity> uniqueEntities = new HashSet<EREntity>();
 
     /**
-     * Unique relationship names
+     * Unique relationships
      */
-    private Set<Relationship> uniqueRelationships = new HashSet<Relationship>();
+    private Set<ERRelationship> uniqueRelationships = new HashSet<ERRelationship>();
 
     /**
      * Unique participating entities
      */
-    private Set<ParticipatingEntity> uniqueParticipatingEntities = new HashSet<ParticipatingEntity>();
+    private Set<ERParticipatingEntity> uniqueParticipatingEntities = new HashSet<ERParticipatingEntity>();
 
     /**
      * Unique attributes
      */
-    private Set<Attribute> uniqueAttributes = new HashSet<Attribute>();
+    private Set<ERAttribute> uniqueAttributes = new HashSet<ERAttribute>();
 
     /**
      * @return
      */
-    public List<Entity> getEntities() {
+    public List<EREntity> getEntities() {
         return entities;
     }
 
     /**
      * @return
      */
-    public Entity getEntity(String name) {
-        for (Entity entity : entities) {
+    public EREntity getEntity(String name) {
+        for (EREntity entity : entities) {
             if (entity.getName().equals(name)) {
                 return entity;
             }
@@ -70,10 +68,10 @@ public class Schema {
     /**
      * @return
      */
-    public List<Entity> getStrongEntities() {
-        List<Entity> strongEntities = new ArrayList<Entity>();
+    public List<EREntity> getStrongEntities() {
+        List<EREntity> strongEntities = new ArrayList<EREntity>();
 
-        for (Entity entity : entities) {
+        for (EREntity entity : entities) {
             if (entity.isStrong()) {
                 strongEntities.add(entity);
             }
@@ -85,8 +83,8 @@ public class Schema {
     /**
      * @return
      */
-    public Entity getStrongEntity(String name) {
-        for (Entity entity : getStrongEntities()) {
+    public EREntity getStrongEntity(String name) {
+        for (EREntity entity : getStrongEntities()) {
             if (entity.getName().equals(name)) {
                 return entity;
             }
@@ -98,10 +96,10 @@ public class Schema {
     /**
      * @return
      */
-    public List<Entity> getWeakEntities() {
-        List<Entity> weakEntities = new ArrayList<Entity>();
+    public List<EREntity> getWeakEntities() {
+        List<EREntity> weakEntities = new ArrayList<EREntity>();
 
-        for (Entity entity : entities) {
+        for (EREntity entity : entities) {
             if (entity.isWeak()) {
                 weakEntities.add(entity);
             }
@@ -113,8 +111,8 @@ public class Schema {
     /**
      * @return
      */
-    public Entity getWeakEntity(String name) {
-        for (Entity entity : getWeakEntities()) {
+    public EREntity getWeakEntity(String name) {
+        for (EREntity entity : getWeakEntities()) {
             if (entity.getName().equals(name)) {
                 return entity;
             }
@@ -126,14 +124,14 @@ public class Schema {
     /**
      * @param entity
      */
-    public void addEntity(Entity entity) {
+    public void addEntity(EREntity entity) {
         entities.add(entity);
     }
 
     /**
      * @return
      */
-    public List<Relationship> getRelationships() {
+    public List<ERRelationship> getRelationships() {
         return relationships;
     }
 
@@ -143,8 +141,8 @@ public class Schema {
      *
      * @return
      */
-    public Relationship getIdentifyingRelationship(String aEntityName, String bEntityName) {
-        for (Relationship relationship : relationships) {
+    public ERRelationship getIdentifyingRelationship(String aEntityName, String bEntityName) {
+        for (ERRelationship relationship : relationships) {
             if (relationship.isIdentifying()
                 && relationship.getParticipatingEntity(aEntityName) != null
                 && relationship.getParticipatingEntity(bEntityName) != null
@@ -161,10 +159,10 @@ public class Schema {
      *
      * @return
      */
-    public List<Relationship> getIdentifyingRelationships(String entityName) {
-        List<Relationship> identifyingRelationships = new ArrayList<Relationship>();
+    public List<ERRelationship> getIdentifyingRelationships(String entityName) {
+        List<ERRelationship> identifyingRelationships = new ArrayList<ERRelationship>();
 
-        for (Relationship relationship : relationships) {
+        for (ERRelationship relationship : relationships) {
             if (relationship.isIdentifying()
                 && relationship.getParticipatingEntity(entityName) != null
             ) {
@@ -178,156 +176,156 @@ public class Schema {
     /**
      * @param relationship
      */
-    public void addRelationship(Relationship relationship) {
+    public void addRelationship(ERRelationship relationship) {
         relationships.add(relationship);
     }
 
     /**
-     * @throws InconsistentSchemaException
+     * @throws ERSchemaException
      *
      * Checks for schema inconsistencies.
      */
-    public void validate() throws InconsistentSchemaException {
-        for (Entity entity : entities) {
+    public void validate() throws ERSchemaException {
+        for (EREntity entity : entities) {
             if (StringUtils.isBlank(entity.getUniqueName())) {
-                throw new InconsistentSchemaException("Every Entity must have a name.");
+                throw new ERSchemaException("Every EREntity must have a name.");
             }
 
             if (uniqueEntities.contains(entity)) {
-                throw new InconsistentSchemaException(entity + " is a duplicate.");
+                throw new ERSchemaException(entity + " is a duplicate.");
             } else {
                 uniqueEntities.add(entity);
             }
         }
 
-        for (Relationship relationship : relationships) {
+        for (ERRelationship relationship : relationships) {
             if (StringUtils.isBlank(relationship.getUniqueName())) {
-                throw new InconsistentSchemaException("Every Relationship must have a name.");
+                throw new ERSchemaException("Every ERRelationship must have a name.");
             }
 
             if (uniqueRelationships.contains(relationship)) {
-                throw new InconsistentSchemaException(relationship + " is a duplicate.");
+                throw new ERSchemaException(relationship + " is a duplicate.");
             } else {
                 uniqueRelationships.add(relationship);
             }
 
             if (relationship.getParticipatingEntities().size() < 2) {
-                throw new InconsistentSchemaException(relationship
+                throw new ERSchemaException(relationship
                     + " must have at least 2 ParticipatingEntities.");
             }
 
             if (relationship.getParticipatingEntities().size() > 3) {
-                throw new InconsistentSchemaException(relationship
+                throw new ERSchemaException(relationship
                     + " cannot have more than 3 ParticipatingEntities.");
             }
 
-            for (ParticipatingEntity participatingEntity : relationship.getParticipatingEntities()) {
+            for (ERParticipatingEntity participatingEntity : relationship.getParticipatingEntities()) {
                 if (StringUtils.isBlank(participatingEntity.getUniqueName())) {
-                    throw new InconsistentSchemaException(
-                        "Every ParticipatingEntity must have a name.");
+                    throw new ERSchemaException(
+                        "Every ERParticipatingEntity must have a name.");
                 }
 
                 if (uniqueParticipatingEntities.contains(participatingEntity)) {
-                    throw new InconsistentSchemaException(participatingEntity
+                    throw new ERSchemaException(participatingEntity
                         + " in " + relationship + " is a duplicate.");
                 } else {
                     uniqueParticipatingEntities.add(participatingEntity);
                 }
 
                 if (getEntity(participatingEntity.getName()) == null) {
-                    throw new InconsistentSchemaException(participatingEntity
+                    throw new ERSchemaException(participatingEntity
                         + " in " + relationship
-                        + " refers to Entity(" + participatingEntity.getName() + ")"
+                        + " refers to EREntity(" + participatingEntity.getName() + ")"
                         + " which does not exist.");
                 }
             }
 
             if (relationship.isIdentifying()) {
                 if (!relationship.isBinary()) {
-                    throw new InconsistentSchemaException("Identifying " + relationship
+                    throw new ERSchemaException("Identifying " + relationship
                         + " must have exactly 2 ParticipatingEntities.");
                 }
 
-                List<ParticipatingEntity> participatingEntities =
+                List<ERParticipatingEntity> participatingEntities =
                     relationship.getParticipatingEntities();
-                Entity aEntity = getEntity(participatingEntities.get(0).getName());
-                Entity bEntity = getEntity(participatingEntities.get(1).getName());
+                EREntity aEntity = getEntity(participatingEntities.get(0).getName());
+                EREntity bEntity = getEntity(participatingEntities.get(1).getName());
 
                 if (!((aEntity.isStrong() && bEntity.isWeak())
                     || (aEntity.isWeak() && bEntity.isStrong()))
                 ) {
-                    throw new InconsistentSchemaException("Identifying " + relationship
-                        + " must have 1 strong ParticipatingEntity"
-                        + " and 1 weak ParticipatingEntity.");
+                    throw new ERSchemaException("Identifying " + relationship
+                        + " must have 1 strong ERParticipatingEntity"
+                        + " and 1 weak ERParticipatingEntity.");
                 }
             }
         }
 
-        for (Entity entity : getWeakEntities()) {
+        for (EREntity entity : getWeakEntities()) {
             if (getIdentifyingRelationships(entity.getName()).size() != 1) {
-                throw new InconsistentSchemaException("Weak " + entity
-                    + " must have exactly 1 binary identifying Relationship with a strong Entity.");
+                throw new ERSchemaException("Weak " + entity
+                    + " must have exactly 1 binary identifying ERRelationship with a strong EREntity.");
             }
         }
 
-        for (Entity entity : entities) {
+        for (EREntity entity : entities) {
             validateAttributes(entity.getAttributes());
         }
 
-        for (Relationship relationship : relationships) {
+        for (ERRelationship relationship : relationships) {
             validateAttributes(relationship.getAttributes());
         }
     }
 
     /**
-     * @throws InconsistentSchemaException
+     * @throws ERSchemaException
      *
      * Checks for schema inconsistencies.
      */
-    public void validateAttributes(List<Attribute> attributes) throws InconsistentSchemaException {
-        for (Attribute attribute : attributes) {
+    public void validateAttributes(List<ERAttribute> attributes) throws ERSchemaException {
+        for (ERAttribute attribute : attributes) {
             if (StringUtils.isBlank(attribute.getUniqueName())) {
-                throw new InconsistentSchemaException("Every Attribute must have a name.");
+                throw new ERSchemaException("Every ERAttribute must have a name.");
             }
 
             if (uniqueAttributes.contains(attribute)) {
-                throw new InconsistentSchemaException(attribute + " is a duplicate.");
+                throw new ERSchemaException(attribute + " is a duplicate.");
             } else {
                 uniqueAttributes.add(attribute);
             }
 
             if (attribute.isKey() && attribute.isMultivalued()) {
-                throw new InconsistentSchemaException("Key " + attribute
+                throw new ERSchemaException("Key " + attribute
                     + " cannot be multivalued.");
             }
 
             if (attribute.isComposite()) {
-                for (Entity entity : uniqueEntities) {
+                for (EREntity entity : uniqueEntities) {
                     if (entity.getUniqueName().equals(attribute.getUniqueName())) {
-                        throw new InconsistentSchemaException("Composite " + attribute
+                        throw new ERSchemaException("Composite " + attribute
                             + " cannot have the same name as " + entity + ".");
                     }
                 }
             }
 
-            for (Attribute componentAttribute : attribute.getComponentAttributes()) {
+            for (ERAttribute componentAttribute : attribute.getComponentAttributes()) {
                 if (StringUtils.isBlank(componentAttribute.getUniqueName())) {
-                    throw new InconsistentSchemaException("Every Attribute must have a name.");
+                    throw new ERSchemaException("Every ERAttribute must have a name.");
                 }
 
                 if (uniqueAttributes.contains(componentAttribute)) {
-                    throw new InconsistentSchemaException(componentAttribute + " is a duplicate.");
+                    throw new ERSchemaException(componentAttribute + " is a duplicate.");
                 } else {
                     uniqueAttributes.add(componentAttribute);
                 }
 
                 if (componentAttribute.isKey()) {
-                    throw new InconsistentSchemaException("Component " + attribute
+                    throw new ERSchemaException("Component " + attribute
                         + " cannot be a key.");
                 }
 
                 if (componentAttribute.isComposite()) {
-                    throw new InconsistentSchemaException("Component " + attribute
+                    throw new ERSchemaException("Component " + attribute
                         + " cannot be composite.");
                 }
             }

@@ -1,4 +1,4 @@
-package com.myrosh.erowl.er.schema;
+package com.myrosh.erowlmapper.er;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,7 +9,7 @@ import java.util.List;
  * Models an ER entity/relationship/component attribute
  *
  */
-public class Attribute extends Element {
+public class ERAttribute extends ERElement {
 
     /**
      * Key flag
@@ -29,7 +29,7 @@ public class Attribute extends Element {
     /**
      * Component attribute objects
      */
-    private List<Attribute> componentAttributes = new ArrayList<Attribute>();
+    private List<ERAttribute> componentAttributes = new ArrayList<ERAttribute>();
 
     /**
      * @return
@@ -76,14 +76,14 @@ public class Attribute extends Element {
     /**
      * @return
      */
-    public List<Attribute> getComponentAttributes() {
+    public List<ERAttribute> getComponentAttributes() {
         return componentAttributes;
     }
 
     /**
      * @param attribute
      */
-    public void addComponentAttribute(Attribute attribute) {
+    public void addComponentAttribute(ERAttribute attribute) {
         componentAttributes.add(attribute);
     }
 }

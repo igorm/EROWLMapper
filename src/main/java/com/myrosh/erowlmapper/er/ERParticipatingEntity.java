@@ -1,10 +1,10 @@
-package com.myrosh.erowl.er.schema;
+package com.myrosh.erowlmapper.er;
 
 import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.myrosh.erowl.Utils;
+import com.myrosh.erowlmapper.Utils;
 
 /**
  * @author igorm
@@ -12,7 +12,7 @@ import com.myrosh.erowl.Utils;
  * Models an ER entity participating in a relationship
  *
  */
-public class ParticipatingEntity extends Element {
+public class ERParticipatingEntity extends ERElement {
 
     /**
      * Role name
@@ -41,6 +41,13 @@ public class ParticipatingEntity extends Element {
      */
     public String getUniqueRole() {
         return Utils.lowerCaseCleanName(role);
+    }
+
+    /**
+     * @return
+     */
+    public String getRoleOrName() {
+        return StringUtils.isBlank(getUniqueRole()) ? getName() : getRole();
     }
 
     /**
@@ -92,7 +99,7 @@ public class ParticipatingEntity extends Element {
             return false;
         }
 
-        ParticipatingEntity participatingEntity = (ParticipatingEntity)that;
+        ERParticipatingEntity participatingEntity = (ERParticipatingEntity)that;
 
         return getUniqueName().equals(participatingEntity.getUniqueName())
             && getUniqueRole().equals(participatingEntity.getUniqueRole());

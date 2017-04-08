@@ -1,8 +1,9 @@
-package com.myrosh.erowl;
+package com.myrosh.erowlmapper;
 
 import java.util.List;
 import java.util.ArrayList;
 
+import com.myrosh.erowlmapper.er.*;
 import org.apache.commons.lang3.StringUtils;
 
 import org.apache.jena.ontology.DatatypeProperty;
@@ -14,21 +15,15 @@ import org.apache.jena.ontology.OntModelSpec;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.vocabulary.XSD;
 
-import com.myrosh.erowl.er.schema.Attribute;
-import com.myrosh.erowl.er.schema.Entity;
-import com.myrosh.erowl.er.schema.ParticipatingEntity;
-import com.myrosh.erowl.er.schema.Relationship;
-import com.myrosh.erowl.er.schema.Schema;
-import com.myrosh.erowl.MappingException;
-import com.myrosh.erowl.Utils;
+import com.myrosh.erowlmapper.er.ERSchema;
 
 /**
  * @author igorm
  *
- * An ER to OWL Mapper implementation using Apache Jena
+ * An ER to OWL mapper implementation using Apache Jena
  *
  */
-public class Mapper {
+public class EROWLMapper {
 
     /**
      * Namespace URI constant
@@ -38,7 +33,7 @@ public class Mapper {
     /**
      * ER schema
      */
-    private Schema schema;
+    private ERSchema schema;
 
     /**
      * OWL Ontology
@@ -48,9 +43,9 @@ public class Mapper {
     /**
      * @param schema
      * @return
-     * @throws MappingException
+     * @throws EROWLMappingException
      */
-    public OntModel map(Schema schema) throws MappingException {
+    public OntModel map(ERSchema schema) throws EROWLMappingException {
         this.schema = schema;
         model = ModelFactory.createOntologyModel(OntModelSpec.OWL_LITE_MEM);
 
@@ -66,38 +61,38 @@ public class Mapper {
         return model;
     }
 
-    private OntClass mapEntity(Entity entity) throws MappingException {
+    private OntClass mapEntity(EREntity entity) throws EROWLMappingException {
         // Map the entity
-        OntClass entityClass = addClass(entity.getName());
-        List<Attribute> keyAttributes = entity.getKeyAttributes();
+        OntClass entityClass = addOWLClass(entity.getName());
+        List<ERAttribute> keyAttributes = entity.getKeyAttributes();
 
         if (keyAttributes.size() == 1) {
-            Attribute keyAttribute = keyAttributes.get(0);
+            ERAttribute keyAttribute = keyAttributes.get(0);
 
             if (keyAttribute.isComposite()) {
                 // Map the single composite key attribute
-                OntClass keyClass = addKeyClass(entityClass);
+                OntClass keyClass = addOWLKeyClass(entityClass);
 
-                for (Attribute attribute : keyAttribute.getComponentAttributes()) {
-                    addDatatypeProperty(attribute.getName(), keyClass, true, true);
+                for (ERAttribute attribute : keyAttribute.getComponentAttributes()) {
+                    addOWLDatatypeProperty(attribute.getName(), keyClass, true, true);
                 }
             } else {
                 // Map the single simple key attribute
-                addDatatypeProperty(keyAttribute.getName(), entityClass, true, true);
+                addOWLDatatypeProperty(keyAttribute.getName(), entityClass, true, true);
             }
         } else if (keyAttributes.size() > 1) {
             // Map multiple simple key attributes
-            OntClass keyClass = addKeyClass(entityClass);
+            OntClass keyClass = addOWLKeyClass(entityClass);
 
-            for (Attribute attribute : keyAttributes) {
-                addDatatypeProperty(attribute.getName(), keyClass, true, true);
+            for (ERAttribute attribute : keyAttributes) {
+                addOWLDatatypeProperty(attribute.getName(), keyClass, true, true);
             }
         }
 
-        for (Attribute nonKeyAttribute : entity.getNonKeyAttributes()) {
+        for (ERAttribute nonKeyAttribute : entity.getNonKeyAttributes()) {
             if (nonKeyAttribute.isComposite()) {
                 // Map composite attributes
-                OntClass compositeAttributeClass = addBClass(
+                OntClass compositeAttributeClass = addOWLBClass(
                     entityClass,
                     nonKeyAttribute.getName(),
                     !nonKeyAttribute.isMultivalued(),
@@ -106,8 +101,8 @@ public class Mapper {
                     true
                 );
 
-                for (Attribute attribute : nonKeyAttribute.getComponentAttributes()) {
-                    addDatatypeProperty(
+                for (ERAttribute attribute : nonKeyAttribute.getComponentAttributes()) {
+                    addOWLDatatypeProperty(
                         attribute.getName(),
                         compositeAttributeClass,
                         !attribute.isMultivalued(),
@@ -116,7 +111,7 @@ public class Mapper {
                 }
             } else {
                 // Map simple attributes
-                addDatatypeProperty(
+                addOWLDatatypeProperty(
                     nonKeyAttribute.getName(),
                     entityClass,
                     !nonKeyAttribute.isMultivalued(),
@@ -128,36 +123,32 @@ public class Mapper {
         return entityClass;
     }
 
-    private void mapStrongEntities() throws MappingException {
-        for (Entity entity : schema.getStrongEntities()) {
+    private void mapStrongEntities() throws EROWLMappingException {
+        for (EREntity entity : schema.getStrongEntities()) {
             mapEntity(entity);
         }
     }
 
-    private void mapWeakEntitiesAndIdentifyingRelationships() throws MappingException {
-        for (Entity entity : schema.getWeakEntities()) {
-            Relationship relationship = schema.getIdentifyingRelationships(entity.getName()).get(0);
+    private void mapWeakEntitiesAndIdentifyingRelationships() throws EROWLMappingException {
+        for (EREntity entity : schema.getWeakEntities()) {
+            ERRelationship relationship = schema.getIdentifyingRelationships(entity.getName()).get(0);
 
-            ParticipatingEntity aParticipatingEntity = null;
-            ParticipatingEntity bParticipatingEntity =
+            ERParticipatingEntity aParticipatingEntity = null;
+            ERParticipatingEntity bParticipatingEntity =
                 relationship.getParticipatingEntity(entity.getName());
 
-            for (ParticipatingEntity participatingEntity : relationship.getParticipatingEntities()) {
+            for (ERParticipatingEntity participatingEntity : relationship.getParticipatingEntities()) {
                 if (!participatingEntity.getName().equals(entity.getName())) {
                     aParticipatingEntity = participatingEntity;
                     break;
                 }
             }
 
-            OntClass aClass = getClass(aParticipatingEntity.getName());
+            OntClass aClass = getOWLClass(aParticipatingEntity.getName());
             OntClass bClass = mapEntity(entity);
 
-            addHasIsOfObjectProperties(
-                Utils.capitalizeCleanName(
-                    StringUtils.isBlank(bParticipatingEntity.getRole())
-                    ? bParticipatingEntity.getName()
-                    : bParticipatingEntity.getRole()
-                ),
+            addOWLHasIsOfObjectProperties(
+                bParticipatingEntity.getRoleOrName(),
                 aClass,
                 bClass,
                 (aParticipatingEntity.getMax() == 1),
@@ -168,34 +159,21 @@ public class Mapper {
         }
     }
 
-    private void mapBinaryRelationshipsWithoutAttributes() throws MappingException {
-        for (Relationship relationship : schema.getRelationships()) {
+    private void mapBinaryRelationshipsWithoutAttributes() throws EROWLMappingException {
+        for (ERRelationship relationship : schema.getRelationships()) {
             if (!relationship.isIdentifying()
                 && relationship.isBinary()
                 && relationship.getAttributes().isEmpty()
             ) {
-                ParticipatingEntity aParticipatingEntity =
+                ERParticipatingEntity aParticipatingEntity =
                     relationship.getParticipatingEntities().get(0);
-                ParticipatingEntity bParticipatingEntity =
+                ERParticipatingEntity bParticipatingEntity =
                     relationship.getParticipatingEntities().get(1);
 
-                addInverseObjectProperties(
-                    "has",
-                    Utils.capitalizeCleanName(
-                        StringUtils.isBlank(bParticipatingEntity.getRole())
-                        ? bParticipatingEntity.getName()
-                        : bParticipatingEntity.getRole()
-                    ),
-                    "",
-                    "is",
-                    Utils.capitalizeCleanName(
-                        StringUtils.isBlank(aParticipatingEntity.getRole())
-                        ? aParticipatingEntity.getName()
-                        : aParticipatingEntity.getRole()
-                    ),
-                    "Of",
-                    getClass(aParticipatingEntity.getName()),
-                    getClass(bParticipatingEntity.getName()),
+                addOWLHasIsOfObjectProperties(
+                    bParticipatingEntity.getRoleOrName(),
+                    getOWLClass(aParticipatingEntity.getName()),
+                    getOWLClass(bParticipatingEntity.getName()),
                     (aParticipatingEntity.getMax() == 1),
                     (aParticipatingEntity.getMin() == 1),
                     (bParticipatingEntity.getMax() == 1),
@@ -205,15 +183,15 @@ public class Mapper {
         }
     }
 
-    private void mapBinaryRelationshipsWithAttributes() throws MappingException {
-        for (Relationship relationship : schema.getRelationships()) {
+    private void mapBinaryRelationshipsWithAttributes() throws EROWLMappingException {
+        for (ERRelationship relationship : schema.getRelationships()) {
             if (!relationship.isIdentifying()
                 && relationship.isBinary()
                 && !relationship.getAttributes().isEmpty()
             ) {
-                ParticipatingEntity aParticipatingEntity =
+                ERParticipatingEntity aParticipatingEntity =
                     relationship.getParticipatingEntities().get(0);
-                ParticipatingEntity bParticipatingEntity =
+                ERParticipatingEntity bParticipatingEntity =
                     relationship.getParticipatingEntities().get(1);
 
 
@@ -230,11 +208,11 @@ public class Mapper {
      * inverse object properties, min and max cardinality should be set to one.
      */
     private void mapTernaryRelationships() {
-        for (Relationship relationship : schema.getRelationships()) {
+        for (ERRelationship relationship : schema.getRelationships()) {
             if (relationship.getParticipatingEntities().size() == 3) {
-                ParticipatingEntity firstParticipatingEntity = relationship.getParticipatingEntities().get(0);
-                ParticipatingEntity secondParticipatingEntity = relationship.getParticipatingEntities().get(1);
-                ParticipatingEntity thirdParticipatingEntity = relationship.getParticipatingEntities().get(2);
+                ERParticipatingEntity firstParticipatingEntity = relationship.getParticipatingEntities().get(0);
+                ERParticipatingEntity secondParticipatingEntity = relationship.getParticipatingEntities().get(1);
+                ERParticipatingEntity thirdParticipatingEntity = relationship.getParticipatingEntities().get(2);
 
                 String firstEntityClassName = firstParticipatingEntity.getName();
                 String secondEntityClassName = secondParticipatingEntity.getName();
@@ -325,8 +303,8 @@ public class Mapper {
         }
     }
 
-    private OntClass addKeyClass(OntClass aClass) throws MappingException {
-        return addBClass(
+    private OntClass addOWLKeyClass(OntClass aClass) throws EROWLMappingException {
+        return addOWLBClass(
             aClass,
             aClass.getLocalName() + "Key",
             true,
@@ -336,17 +314,17 @@ public class Mapper {
         );
     }
 
-    private OntClass addBClass(
+    private OntClass addOWLBClass(
         OntClass aClass,
         String name,
         boolean aIsFunctional,
         boolean aIsMinCardinalityOne,
         boolean bIsFunctional,
         boolean bIsMinCardinalityOne
-    ) throws MappingException {
-        OntClass bClass = addClass(name);
+    ) throws EROWLMappingException {
+        OntClass bClass = addOWLClass(name);
 
-        addHasIsOfObjectProperties(
+        addOWLHasIsOfObjectProperties(
             bClass.getLocalName(),
             aClass,
             bClass,
@@ -359,7 +337,7 @@ public class Mapper {
         return bClass;
     }
 
-    private List<ObjectProperty> addHasIsOfObjectProperties(
+    private List<ObjectProperty> addOWLHasIsOfObjectProperties(
         String basename,
         OntClass aClass,
         OntClass bClass,
@@ -367,8 +345,8 @@ public class Mapper {
         boolean aIsMinCardinalityOne,
         boolean bIsFunctional,
         boolean bIsMinCardinalityOne
-    ) throws MappingException {
-        return addInverseObjectProperties(
+    ) throws EROWLMappingException {
+        return addOWLInverseObjectProperties(
             "has",
             basename,
             "",
@@ -384,7 +362,7 @@ public class Mapper {
         );
     }
 
-    private List<ObjectProperty> addInverseObjectProperties(
+    private List<ObjectProperty> addOWLInverseObjectProperties(
         String aPrefix,
         String aBasename,
         String aSuffix,
@@ -397,8 +375,8 @@ public class Mapper {
         boolean aIsMinCardinalityOne,
         boolean bIsFunctional,
         boolean bIsMinCardinalityOne
-    ) throws MappingException {
-        ObjectProperty aProperty = addObjectProperty(
+    ) throws EROWLMappingException {
+        ObjectProperty aProperty = addOWLObjectProperty(
             aPrefix,
             aBasename,
             aSuffix,
@@ -409,7 +387,7 @@ public class Mapper {
             aIsMinCardinalityOne
         );
 
-        ObjectProperty bProperty = addObjectProperty(
+        ObjectProperty bProperty = addOWLObjectProperty(
             bPrefix,
             bBasename,
             bSuffix,
@@ -427,7 +405,7 @@ public class Mapper {
         return properties;
     }
 
-    private ObjectProperty addObjectProperty(
+    private ObjectProperty addOWLObjectProperty(
         String prefix,
         String basename,
         String suffix,
@@ -436,12 +414,12 @@ public class Mapper {
         ObjectProperty inverseOfProperty,
         boolean isFunctional,
         boolean isMinCardinalityOne
-    ) throws MappingException {
+    ) throws EROWLMappingException {
         String name = prefix + Utils.capitalizeCleanName(basename) + suffix;
         String uri = NS + name;
 
         if (model.getObjectProperty(uri) != null) {
-            throw new MappingException("Object property " + name + " already exists.");
+            throw new EROWLMappingException("Object property " + name + " already exists.");
         }
 
         ObjectProperty property =
@@ -466,17 +444,17 @@ public class Mapper {
         return property;
     }
 
-    private DatatypeProperty addDatatypeProperty(
+    private DatatypeProperty addOWLDatatypeProperty(
         String basename,
         OntClass domainClass,
         boolean isFunctional,
         boolean isMinCardinalityOne
-    ) throws MappingException {
+    ) throws EROWLMappingException {
         String name = "has" + Utils.capitalizeCleanName(basename);
         String uri = NS + name;
 
         if (model.getDatatypeProperty(uri) != null) {
-            throw new MappingException("Datatype property " + name + " already exists.");
+            throw new EROWLMappingException("Datatype property " + name + " already exists.");
         }
 
         DatatypeProperty property = model.createDatatypeProperty(uri, isFunctional);
@@ -490,25 +468,25 @@ public class Mapper {
         return property;
     }
 
-    private OntClass addClass(String name) throws MappingException {
+    private OntClass addOWLClass(String name) throws EROWLMappingException {
         name = Utils.capitalizeCleanName(name);
         String uri = NS + name;
 
         if (model.getOntClass(uri) != null) {
-            throw new MappingException("Class " + name + " already exists.");
+            throw new EROWLMappingException("Class " + name + " already exists.");
         }
 
         return model.createClass(uri);
     }
 
-    private OntClass getClass(String name) throws MappingException {
+    private OntClass getOWLClass(String name) throws EROWLMappingException {
         name = Utils.capitalizeCleanName(name);
         String uri = NS + name;
 
         OntClass clazz = model.getOntClass(uri);
 
         if (clazz == null) {
-            throw new MappingException("Class " + name + " does not exists.");
+            throw new EROWLMappingException("Class " + name + " does not exists.");
         }
 
         return clazz;

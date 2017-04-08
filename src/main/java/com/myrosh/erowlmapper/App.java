@@ -1,13 +1,12 @@
-package com.myrosh.erowl;
+package com.myrosh.erowlmapper;
+
+import com.myrosh.erowlmapper.er.ERSchema;
+import com.myrosh.erowlmapper.er.ERSchemaParser;
+import com.myrosh.erowlmapper.er.parser.YAMLERSchemaParser;
+import org.apache.jena.ontology.OntModel;
 
 import java.io.FileReader;
 import java.io.PrintWriter;
-
-import com.myrosh.erowl.er.schema.Schema;
-import com.myrosh.erowl.er.Parser;
-import com.myrosh.erowl.er.parser.YAMLParser;
-
-import org.apache.jena.ontology.OntModel;
 
 /**
  * @author igorm
@@ -19,11 +18,11 @@ public class App
 {
     public static void main(String[] args)
     {
-        Parser parser = new YAMLParser();
-        Mapper mapper = new Mapper();
+        ERSchemaParser parser = new YAMLERSchemaParser();
+        EROWLMapper mapper = new EROWLMapper();
 
         try {
-            Schema schema = parser.parse(new FileReader(args[0]));
+            ERSchema schema = parser.parse(new FileReader(args[0]));
             schema.validate();
 
             OntModel model = mapper.map(schema);

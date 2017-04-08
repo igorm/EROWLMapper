@@ -1,9 +1,7 @@
-package com.myrosh.erowl.er.schema;
+package com.myrosh.erowlmapper.er;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import com.myrosh.erowl.Utils;
 
 /**
  * @author igorm
@@ -11,7 +9,7 @@ import com.myrosh.erowl.Utils;
  * Models an ER entity
  *
  */
-public class Entity extends Element {
+public class EREntity extends ERElement {
 
     /**
      * Weak flag
@@ -19,9 +17,9 @@ public class Entity extends Element {
     private boolean weak = false;
 
     /**
-     * Attribute objects
+     * ERAttribute objects
      */
-    private List<Attribute> attributes = new ArrayList<Attribute>();
+    private List<ERAttribute> attributes = new ArrayList<ERAttribute>();
 
     /**
      * @return
@@ -47,17 +45,17 @@ public class Entity extends Element {
     /**
      * @return
      */
-    public List<Attribute> getAttributes() {
+    public List<ERAttribute> getAttributes() {
         return attributes;
     }
 
     /**
      * @return
      */
-    public List<Attribute> getKeyAttributes() {
-        List<Attribute> keyAttributes = new ArrayList<Attribute>();
+    public List<ERAttribute> getKeyAttributes() {
+        List<ERAttribute> keyAttributes = new ArrayList<ERAttribute>();
 
-        for (Attribute attribute : attributes) {
+        for (ERAttribute attribute : attributes) {
             if (attribute.isKey()) {
                 keyAttributes.add(attribute);
             }
@@ -69,10 +67,10 @@ public class Entity extends Element {
     /**
      * @return
      */
-    public List<Attribute> getNonKeyAttributes() {
-        List<Attribute> nonKeyAttributes = new ArrayList<Attribute>();
+    public List<ERAttribute> getNonKeyAttributes() {
+        List<ERAttribute> nonKeyAttributes = new ArrayList<ERAttribute>();
 
-        for (Attribute attribute : attributes) {
+        for (ERAttribute attribute : attributes) {
             if (!attribute.isKey()) {
                 nonKeyAttributes.add(attribute);
             }
@@ -84,7 +82,7 @@ public class Entity extends Element {
     /**
      * @param attribute
      */
-    public void addAttribute(Attribute attribute) {
+    public void addAttribute(ERAttribute attribute) {
         attributes.add(attribute);
     }
 }

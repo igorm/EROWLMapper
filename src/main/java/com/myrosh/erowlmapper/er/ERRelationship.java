@@ -1,4 +1,4 @@
-package com.myrosh.erowl.er.schema;
+package com.myrosh.erowlmapper.er;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,7 +9,7 @@ import java.util.List;
  * Models an ER relationship
  *
  */
-public class Relationship extends Element {
+public class ERRelationship extends ERElement {
 
     /**
      * Identifying flag
@@ -19,12 +19,12 @@ public class Relationship extends Element {
     /**
      * Participating entity objects
      */
-    private List<ParticipatingEntity> participatingEntities = new ArrayList<ParticipatingEntity>();
+    private List<ERParticipatingEntity> participatingEntities = new ArrayList<ERParticipatingEntity>();
 
     /**
-     * Attribute objects
+     * ERAttribute objects
      */
-    private List<Attribute> attributes = new ArrayList<Attribute>();
+    private List<ERAttribute> attributes = new ArrayList<ERAttribute>();
 
     /**
      * @return
@@ -43,7 +43,7 @@ public class Relationship extends Element {
     /**
      * @return
      */
-    public List<ParticipatingEntity> getParticipatingEntities() {
+    public List<ERParticipatingEntity> getParticipatingEntities() {
         return participatingEntities;
     }
 
@@ -51,8 +51,8 @@ public class Relationship extends Element {
      * @param name
      * @return
      */
-    public ParticipatingEntity getParticipatingEntity(String name) {
-        for (ParticipatingEntity participatingEntity : participatingEntities) {
+    public ERParticipatingEntity getParticipatingEntity(String name) {
+        for (ERParticipatingEntity participatingEntity : participatingEntities) {
             if (participatingEntity.getName().equals(name)) {
                 return participatingEntity;
             }
@@ -64,7 +64,7 @@ public class Relationship extends Element {
     /**
      * @param participatingEntity
      */
-    public void addParticipatingEntity(ParticipatingEntity participatingEntity) {
+    public void addParticipatingEntity(ERParticipatingEntity participatingEntity) {
         participatingEntities.add(participatingEntity);
     }
 
@@ -92,14 +92,14 @@ public class Relationship extends Element {
     /**
      * @return
      */
-    public List<Attribute> getAttributes() {
+    public List<ERAttribute> getAttributes() {
         return attributes;
     }
 
     /**
      * @param attribute
      */
-    public void addAttribute(Attribute attribute) {
+    public void addAttribute(ERAttribute attribute) {
         attributes.add(attribute);
     }
 }

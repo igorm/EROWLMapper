@@ -1,4 +1,4 @@
-package com.myrosh.erowl;
+package com.myrosh.erowlmapper;
 
 import org.apache.commons.lang3.StringUtils;
 

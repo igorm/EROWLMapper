@@ -1,8 +1,8 @@
-package com.myrosh.erowl.er.schema;
+package com.myrosh.erowlmapper.er;
+
+import com.myrosh.erowlmapper.Utils;
 
 import java.util.Objects;
-
-import com.myrosh.erowl.Utils;
 
 /**
  * @author igorm
@@ -10,7 +10,7 @@ import com.myrosh.erowl.Utils;
  * Models an ER schema element
  *
  */
-public abstract class Element {
+public abstract class ERElement {
 
     /**
      * Name
@@ -52,7 +52,7 @@ public abstract class Element {
             return false;
         }
 
-        Element element = (Element)that;
+        ERElement element = (ERElement)that;
 
         return getUniqueName().equals(element.getUniqueName());
     }
