@@ -53,11 +53,12 @@ public class ERSchema {
     }
 
     /**
+     * @param participatingEntity
      * @return
      */
-    public EREntity getEntity(String name) {
+    public EREntity getEntity(ERParticipatingEntity participatingEntity) {
         for (EREntity entity : entities) {
-            if (entity.getName().equals(name)) {
+            if (entity.getUniqueName().equals(participatingEntity.getUniqueName())) {
                 return entity;
             }
         }
@@ -83,19 +84,6 @@ public class ERSchema {
     /**
      * @return
      */
-    public EREntity getStrongEntity(String name) {
-        for (EREntity entity : getStrongEntities()) {
-            if (entity.getName().equals(name)) {
-                return entity;
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * @return
-     */
     public List<EREntity> getWeakEntities() {
         List<EREntity> weakEntities = new ArrayList<EREntity>();
 
@@ -106,19 +94,6 @@ public class ERSchema {
         }
 
         return weakEntities;
-    }
-
-    /**
-     * @return
-     */
-    public EREntity getWeakEntity(String name) {
-        for (EREntity entity : getWeakEntities()) {
-            if (entity.getName().equals(name)) {
-                return entity;
-            }
-        }
-
-        return null;
     }
 
     /**
@@ -136,41 +111,23 @@ public class ERSchema {
     }
 
     /**
-     * @param aEntityName
-     * @param bEntityName
+     * @param weakEntity
      *
      * @return
      */
-    public ERRelationship getIdentifyingRelationship(String aEntityName, String bEntityName) {
-        for (ERRelationship relationship : relationships) {
-            if (relationship.isIdentifying()
-                && relationship.getParticipatingEntity(aEntityName) != null
-                && relationship.getParticipatingEntity(bEntityName) != null
-            ) {
-                return relationship;
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * @param entityName
-     *
-     * @return
-     */
-    public List<ERRelationship> getIdentifyingRelationships(String entityName) {
+    public ERRelationship getIdentifyingBinaryRelationship(EREntity weakEntity) {
         List<ERRelationship> identifyingRelationships = new ArrayList<ERRelationship>();
 
         for (ERRelationship relationship : relationships) {
             if (relationship.isIdentifying()
-                && relationship.getParticipatingEntity(entityName) != null
+                && relationship.isBinary()
+                && relationship.getParticipatingEntity(weakEntity) != null
             ) {
                 identifyingRelationships.add(relationship);
             }
         }
 
-        return identifyingRelationships;
+        return identifyingRelationships.size() == 1 ? identifyingRelationships.get(0) : null;
     }
 
     /**
@@ -211,12 +168,12 @@ public class ERSchema {
 
             if (relationship.getParticipatingEntities().size() < 2) {
                 throw new ERSchemaException(relationship
-                    + " must have at least 2 ParticipatingEntities.");
+                    + " must have at least 2 ERParticipatingEntities.");
             }
 
             if (relationship.getParticipatingEntities().size() > 3) {
                 throw new ERSchemaException(relationship
-                    + " cannot have more than 3 ParticipatingEntities.");
+                    + " cannot have more than 3 ERParticipatingEntities.");
             }
 
             for (ERParticipatingEntity participatingEntity : relationship.getParticipatingEntities()) {
@@ -232,10 +189,10 @@ public class ERSchema {
                     uniqueParticipatingEntities.add(participatingEntity);
                 }
 
-                if (getEntity(participatingEntity.getName()) == null) {
+                if (getEntity(participatingEntity) == null) {
                     throw new ERSchemaException(participatingEntity
                         + " in " + relationship
-                        + " refers to EREntity(" + participatingEntity.getName() + ")"
+                        + " refers to EREntity(" + participatingEntity.getUniqueName() + ")"
                         + " which does not exist.");
                 }
             }
@@ -243,13 +200,13 @@ public class ERSchema {
             if (relationship.isIdentifying()) {
                 if (!relationship.isBinary()) {
                     throw new ERSchemaException("Identifying " + relationship
-                        + " must have exactly 2 ParticipatingEntities.");
+                        + " must have exactly 2 ERParticipatingEntities.");
                 }
 
                 List<ERParticipatingEntity> participatingEntities =
                     relationship.getParticipatingEntities();
-                EREntity aEntity = getEntity(participatingEntities.get(0).getName());
-                EREntity bEntity = getEntity(participatingEntities.get(1).getName());
+                EREntity aEntity = getEntity(participatingEntities.get(0));
+                EREntity bEntity = getEntity(participatingEntities.get(1));
 
                 if (!((aEntity.isStrong() && bEntity.isWeak())
                     || (aEntity.isWeak() && bEntity.isStrong()))
@@ -258,13 +215,18 @@ public class ERSchema {
                         + " must have 1 strong ERParticipatingEntity"
                         + " and 1 weak ERParticipatingEntity.");
                 }
+
+                if (!relationship.getAttributes().isEmpty()) {
+                    throw new ERSchemaException("Identifying " + relationship
+                        + " cannot have attributes.");
+                }
             }
         }
 
-        for (EREntity entity : getWeakEntities()) {
-            if (getIdentifyingRelationships(entity.getName()).size() != 1) {
-                throw new ERSchemaException("Weak " + entity
-                    + " must have exactly 1 binary identifying ERRelationship with a strong EREntity.");
+        for (EREntity weakEntity : getWeakEntities()) {
+            if (getIdentifyingBinaryRelationship(weakEntity) == null) {
+                throw new ERSchemaException("Weak " + weakEntity
+                    + " must have exactly 1 identifying binary ERRelationship with a strong EREntity.");
             }
         }
 

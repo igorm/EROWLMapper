@@ -11,6 +11,6 @@ public class EROWLMappingException extends Exception {
      * @param message
      */
     public EROWLMappingException(String message) {
-        super("ER to OWL Mapping Error: " + message);
+        super("ER-OWL Mapping Error: " + message);
     }
 }

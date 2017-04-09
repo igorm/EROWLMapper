@@ -48,17 +48,33 @@ public class ERRelationship extends ERElement {
     }
 
     /**
-     * @param name
+     * @param entity
      * @return
      */
-    public ERParticipatingEntity getParticipatingEntity(String name) {
+    public ERParticipatingEntity getParticipatingEntity(EREntity entity) {
         for (ERParticipatingEntity participatingEntity : participatingEntities) {
-            if (participatingEntity.getName().equals(name)) {
+            if (participatingEntity.getUniqueName().equals(entity.getUniqueName())) {
                 return participatingEntity;
             }
         }
 
         return null;
+    }
+
+    /**
+     * @param entity
+     * @return
+     */
+    public List<ERParticipatingEntity> getParticipatingEntitiesExcluding(EREntity entity) {
+        List<ERParticipatingEntity> filteredParticipatingEntities = new ArrayList<ERParticipatingEntity>();
+
+        for (ERParticipatingEntity participatingEntity : participatingEntities) {
+            if (!participatingEntity.getUniqueName().equals(entity.getUniqueName())) {
+                filteredParticipatingEntities.add(participatingEntity);
+            }
+        }
+
+        return filteredParticipatingEntities;
     }
 
     /**

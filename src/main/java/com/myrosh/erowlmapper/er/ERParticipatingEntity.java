@@ -1,10 +1,9 @@
 package com.myrosh.erowlmapper.er;
 
-import java.util.Objects;
-
+import com.myrosh.erowlmapper.Utils;
 import org.apache.commons.lang3.StringUtils;
 
-import com.myrosh.erowlmapper.Utils;
+import java.util.Objects;
 
 /**
  * @author igorm

@@ -130,22 +130,21 @@ public class EROWLMapper {
     }
 
     private void mapWeakEntitiesAndIdentifyingRelationships() throws EROWLMappingException {
-        for (EREntity entity : schema.getWeakEntities()) {
-            ERRelationship relationship = schema.getIdentifyingRelationships(entity.getName()).get(0);
+        for (EREntity weakEntity : schema.getWeakEntities()) {
+            ERRelationship relationship = schema.getIdentifyingBinaryRelationship(weakEntity);
 
-            ERParticipatingEntity aParticipatingEntity = null;
-            ERParticipatingEntity bParticipatingEntity =
-                relationship.getParticipatingEntity(entity.getName());
-
-            for (ERParticipatingEntity participatingEntity : relationship.getParticipatingEntities()) {
-                if (!participatingEntity.getName().equals(entity.getName())) {
-                    aParticipatingEntity = participatingEntity;
-                    break;
-                }
+            if (relationship == null) {
+                throw new EROWLMappingException("Weak " + weakEntity + " does not have exactly 1"
+                    + " identifying binary ERRelationship.");
             }
 
+            ERParticipatingEntity aParticipatingEntity =
+                relationship.getParticipatingEntitiesExcluding(weakEntity).get(0);
+            ERParticipatingEntity bParticipatingEntity =
+                relationship.getParticipatingEntity(weakEntity);
+
             OntClass aClass = getOWLClass(aParticipatingEntity.getName());
-            OntClass bClass = mapEntity(entity);
+            OntClass bClass = mapEntity(weakEntity);
 
             addOWLHasIsOfObjectProperties(
                 bParticipatingEntity.getRoleOrName(),
