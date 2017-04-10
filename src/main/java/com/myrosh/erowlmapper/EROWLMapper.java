@@ -193,7 +193,38 @@ public class EROWLMapper {
                 ERParticipatingEntity bParticipatingEntity =
                     relationship.getParticipatingEntities().get(1);
 
+                OntClass aClass = getOWLClass(aParticipatingEntity.getName());
+                OntClass bClass = getOWLClass(bParticipatingEntity.getName());
 
+                String relationshipClassName = aParticipatingEntity.getRoleOrName()
+                    + bParticipatingEntity.getRoleOrName();
+                OntClass relationshipClass = addOWLBClass(
+                    aClass,
+                    relationshipClassName,
+                    (aParticipatingEntity.getMax() == 1),
+                    (aParticipatingEntity.getMin() == 1),
+                    true,
+                    true
+                );
+
+                for (ERAttribute attribute : relationship.getAttributes()) {
+                    addOWLDatatypeProperty(
+                        attribute.getName(),
+                        relationshipClass,
+                        !attribute.isMultivalued(),
+                        false
+                    );
+                }
+
+                addOWLHasIsOfObjectProperties(
+                    relationshipClassName,
+                    bClass,
+                    relationshipClass,
+                    (bParticipatingEntity.getMax() == 1),
+                    (bParticipatingEntity.getMin() == 1),
+                    true,
+                    true
+                );
             }
         }
     }
