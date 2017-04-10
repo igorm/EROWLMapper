@@ -16,34 +16,14 @@ import java.util.Set;
 public class ERSchema {
 
     /**
-     * EREntity objects
+     * Entities
      */
     private List<EREntity> entities = new ArrayList<EREntity>();
 
     /**
-     * ERRelationship objects
+     * Relationships
      */
     private List<ERRelationship> relationships = new ArrayList<ERRelationship>();
-
-    /**
-     * Unique entities
-     */
-    private Set<EREntity> uniqueEntities = new HashSet<EREntity>();
-
-    /**
-     * Unique relationships
-     */
-    private Set<ERRelationship> uniqueRelationships = new HashSet<ERRelationship>();
-
-    /**
-     * Unique participating entities
-     */
-    private Set<ERParticipatingEntity> uniqueParticipatingEntities = new HashSet<ERParticipatingEntity>();
-
-    /**
-     * Unique attributes
-     */
-    private Set<ERAttribute> uniqueAttributes = new HashSet<ERAttribute>();
 
     /**
      * @return
@@ -143,6 +123,10 @@ public class ERSchema {
      * Checks for schema inconsistencies.
      */
     public void validate() throws ERSchemaException {
+        Set<EREntity> uniqueEntities = new HashSet<EREntity>();
+        Set<ERRelationship> uniqueRelationships = new HashSet<ERRelationship>();
+        Set<ERParticipatingEntity> uniqueParticipatingEntities = new HashSet<ERParticipatingEntity>();
+
         for (EREntity entity : entities) {
             if (StringUtils.isBlank(entity.getUniqueName())) {
                 throw new ERSchemaException("Every EREntity must have a name.");
@@ -230,21 +214,17 @@ public class ERSchema {
             }
         }
 
+        List<ERAttribute> attributes = new ArrayList<ERAttribute>();
+        Set<ERAttribute> uniqueAttributes = new HashSet<ERAttribute>();
+
         for (EREntity entity : entities) {
-            validateAttributes(entity.getAttributes());
+            attributes.addAll(entity.getAttributes());
         }
 
         for (ERRelationship relationship : relationships) {
-            validateAttributes(relationship.getAttributes());
+            attributes.addAll(relationship.getAttributes());
         }
-    }
 
-    /**
-     * @throws ERSchemaException
-     *
-     * Checks for schema inconsistencies.
-     */
-    public void validateAttributes(List<ERAttribute> attributes) throws ERSchemaException {
         for (ERAttribute attribute : attributes) {
             if (StringUtils.isBlank(attribute.getUniqueName())) {
                 throw new ERSchemaException("Every ERAttribute must have a name.");

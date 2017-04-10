@@ -1,21 +1,12 @@
 package com.myrosh.erowlmapper;
 
-import java.util.List;
-import java.util.ArrayList;
-
 import com.myrosh.erowlmapper.er.*;
-import org.apache.commons.lang3.StringUtils;
-
-import org.apache.jena.ontology.DatatypeProperty;
-import org.apache.jena.ontology.ObjectProperty;
-import org.apache.jena.ontology.OntProperty;
-import org.apache.jena.ontology.OntClass;
-import org.apache.jena.ontology.OntModel;
-import org.apache.jena.ontology.OntModelSpec;
+import org.apache.jena.ontology.*;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.vocabulary.XSD;
 
-import com.myrosh.erowlmapper.er.ERSchema;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author igorm
@@ -53,9 +44,6 @@ public class EROWLMapper {
         mapWeakEntitiesAndIdentifyingRelationships();
         mapBinaryRelationshipsWithoutAttributes();
         mapBinaryRelationshipsWithAttributes();
-
-
-
         mapTernaryRelationships();
 
         return model;
@@ -196,11 +184,10 @@ public class EROWLMapper {
                 OntClass aClass = getOWLClass(aParticipatingEntity.getName());
                 OntClass bClass = getOWLClass(bParticipatingEntity.getName());
 
-                String relationshipClassName = aParticipatingEntity.getRoleOrName()
-                    + bParticipatingEntity.getRoleOrName();
                 OntClass relationshipClass = addOWLBClass(
                     aClass,
-                    relationshipClassName,
+                    aParticipatingEntity.getRoleOrName()
+                        + bParticipatingEntity.getRoleOrName(),
                     (aParticipatingEntity.getMax() == 1),
                     (aParticipatingEntity.getMin() == 1),
                     true,
@@ -217,7 +204,7 @@ public class EROWLMapper {
                 }
 
                 addOWLHasIsOfObjectProperties(
-                    relationshipClassName,
+                    relationshipClass.getLocalName(),
                     bClass,
                     relationshipClass,
                     (bParticipatingEntity.getMax() == 1),
@@ -229,106 +216,50 @@ public class EROWLMapper {
         }
     }
 
-    /**
-     * Mapping Rule 5. Map each ternary relationship into a class with three pairs of inverse
-     * object properties between participating entity classes and the relationship class. Map
-     * participating entities’ cardinality into min and max cardinality restrictions or combine
-     * characteristics of a functional property with a min cardinality restriction for object
-     * properties pointing from participating entity classes to the relationship class. For their
-     * inverse object properties, min and max cardinality should be set to one.
-     */
-    private void mapTernaryRelationships() {
+    private void mapTernaryRelationships() throws EROWLMappingException {
         for (ERRelationship relationship : schema.getRelationships()) {
-            if (relationship.getParticipatingEntities().size() == 3) {
-                ERParticipatingEntity firstParticipatingEntity = relationship.getParticipatingEntities().get(0);
-                ERParticipatingEntity secondParticipatingEntity = relationship.getParticipatingEntities().get(1);
-                ERParticipatingEntity thirdParticipatingEntity = relationship.getParticipatingEntities().get(2);
+            if (!relationship.isIdentifying() && relationship.isTernary()) {
+                ERParticipatingEntity aParticipatingEntity =
+                    relationship.getParticipatingEntities().get(0);
+                ERParticipatingEntity bParticipatingEntity =
+                    relationship.getParticipatingEntities().get(1);
+                ERParticipatingEntity cParticipatingEntity =
+                    relationship.getParticipatingEntities().get(2);
 
-                String firstEntityClassName = firstParticipatingEntity.getName();
-                String secondEntityClassName = secondParticipatingEntity.getName();
-                String thirdEntityClassName = thirdParticipatingEntity.getName();
-                String relationshipClassName = firstParticipatingEntity.getName()
-                    + secondParticipatingEntity.getName();
+                OntClass aClass = getOWLClass(aParticipatingEntity.getName());
+                OntClass bClass = getOWLClass(bParticipatingEntity.getName());
+                OntClass cClass = getOWLClass(cParticipatingEntity.getName());
 
-                OntClass firstEntityClass = model.getOntClass(NS + firstEntityClassName);
-                OntClass secondEntityClass = model.getOntClass(NS + secondEntityClassName);
-                OntClass thirdEntityClass = model.getOntClass(NS + thirdEntityClassName);
-                OntClass relationshipClass = model.createClass(NS + relationshipClassName);
+                OntClass relationshipClass = addOWLBClass(
+                    aClass,
+                    aParticipatingEntity.getRoleOrName()
+                        + bParticipatingEntity.getRoleOrName()
+                        + cParticipatingEntity.getRoleOrName(),
+                    (aParticipatingEntity.getMax() == 1),
+                    (aParticipatingEntity.getMin() == 1),
+                    true,
+                    true
+                );
 
-                // Create the first-to-relationship objectproperty
-                ObjectProperty firstEntityHasRelationshipsProperty = model.createObjectProperty(
-                    NS + StringUtils.uncapitalize(firstEntityClassName) + "Has" + relationshipClassName);
-                firstEntityHasRelationshipsProperty.addDomain(firstEntityClass);
-                firstEntityHasRelationshipsProperty.addRange(relationshipClass);
+                addOWLHasIsOfObjectProperties(
+                    relationshipClass.getLocalName(),
+                    bClass,
+                    relationshipClass,
+                    (bParticipatingEntity.getMax() == 1),
+                    (bParticipatingEntity.getMin() == 1),
+                    true,
+                    true
+                );
 
-                if (firstParticipatingEntity.getMin() == 1) {
-                    firstEntityClass.addSuperClass(model.createMinCardinalityRestriction(
-                        null, firstEntityHasRelationshipsProperty, 1));
-                }
-
-                if (firstParticipatingEntity.getMax() == 1) {
-                    firstEntityClass.addSuperClass(model.createMaxCardinalityRestriction(
-                        null, firstEntityHasRelationshipsProperty, 1));
-                }
-
-                // Create the relationship-to-first functional objectproperty with min and max cardinality 1
-                ObjectProperty isRelationshipOfFirstEntityProperty = model.createObjectProperty(
-                    NS + "is" + relationshipClassName + "Of" + firstEntityClassName, true);
-                isRelationshipOfFirstEntityProperty.addDomain(relationshipClass);
-                isRelationshipOfFirstEntityProperty.addRange(firstEntityClass);
-                relationshipClass.addSuperClass(model.createMinCardinalityRestriction(
-                    null, isRelationshipOfFirstEntityProperty, 1));
-                isRelationshipOfFirstEntityProperty.addInverseOf(firstEntityHasRelationshipsProperty);
-
-                // Create the second-to-relationship objectproperty
-                ObjectProperty secondEntityHasRelationshipsProperty = model.createObjectProperty(
-                    NS + StringUtils.uncapitalize(secondEntityClassName) + "Has" + relationshipClassName);
-                secondEntityHasRelationshipsProperty.addDomain(secondEntityClass);
-                secondEntityHasRelationshipsProperty.addRange(relationshipClass);
-
-                if (secondParticipatingEntity.getMin() == 1) {
-                    secondEntityClass.addSuperClass(model.createMinCardinalityRestriction(
-                        null, secondEntityHasRelationshipsProperty, 1));
-                }
-
-                if (secondParticipatingEntity.getMax() == 1) {
-                    secondEntityClass.addSuperClass(model.createMaxCardinalityRestriction(
-                        null, secondEntityHasRelationshipsProperty, 1));
-                }
-
-                // Create the relationship-to-second functional objectproperty with min and max cardinality 1
-                ObjectProperty isRelationshipOfSecondEntityProperty = model.createObjectProperty(
-                    NS + "is" + relationshipClassName + "Of" + secondEntityClassName, true);
-                isRelationshipOfSecondEntityProperty.addDomain(relationshipClass);
-                isRelationshipOfSecondEntityProperty.addRange(secondEntityClass);
-                relationshipClass.addSuperClass(model.createMinCardinalityRestriction(
-                    null, isRelationshipOfSecondEntityProperty, 1));
-                isRelationshipOfSecondEntityProperty.addInverseOf(secondEntityHasRelationshipsProperty);
-
-                // Create the third-to-relationship objectproperty
-                ObjectProperty thirdEntityHasRelationshipsProperty = model.createObjectProperty(
-                    NS + StringUtils.uncapitalize(thirdEntityClassName) + "Has" + relationshipClassName);
-                thirdEntityHasRelationshipsProperty.addDomain(thirdEntityClass);
-                thirdEntityHasRelationshipsProperty.addRange(relationshipClass);
-
-                if (secondParticipatingEntity.getMin() == 1) {
-                    thirdEntityClass.addSuperClass(model.createMinCardinalityRestriction(
-                        null, thirdEntityHasRelationshipsProperty, 1));
-                }
-
-                if (secondParticipatingEntity.getMax() == 1) {
-                    thirdEntityClass.addSuperClass(model.createMaxCardinalityRestriction(
-                        null, thirdEntityHasRelationshipsProperty, 1));
-                }
-
-                // Create the relationship-to-third functional objectproperty with min and max cardinality 1
-                ObjectProperty isRelationshipOfThirdEntityProperty = model.createObjectProperty(
-                    NS + "is" + relationshipClassName + "Of" + thirdEntityClassName, true);
-                isRelationshipOfThirdEntityProperty.addDomain(relationshipClass);
-                isRelationshipOfThirdEntityProperty.addRange(thirdEntityClass);
-                relationshipClass.addSuperClass(model.createMinCardinalityRestriction(
-                    null, isRelationshipOfThirdEntityProperty, 1));
-                isRelationshipOfThirdEntityProperty.addInverseOf(thirdEntityHasRelationshipsProperty);
+                addOWLHasIsOfObjectProperties(
+                    relationshipClass.getLocalName(),
+                    cClass,
+                    relationshipClass,
+                    (cParticipatingEntity.getMax() == 1),
+                    (cParticipatingEntity.getMin() == 1),
+                    true,
+                    true
+                );
             }
         }
     }
