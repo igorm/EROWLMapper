@@ -5,12 +5,12 @@ package com.myrosh.erowlmapper;
  *
  * @author igorm
  */
-public class EROWLMappingException extends Exception {
+public class EROWLException extends Exception {
 
     /**
      * @param message
      */
-    public EROWLMappingException(String message) {
+    public EROWLException(String message) {
         super("ER-OWL Mapping Error: " + message);
     }
 }

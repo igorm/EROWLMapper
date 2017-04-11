@@ -118,22 +118,22 @@ public class ERSchema {
     }
 
     /**
-     * @throws ERSchemaException
+     * @throws ERException
      *
      * Checks for schema inconsistencies.
      */
-    public void validate() throws ERSchemaException {
+    public void validate() throws ERException {
         Set<EREntity> uniqueEntities = new HashSet<EREntity>();
         Set<ERRelationship> uniqueRelationships = new HashSet<ERRelationship>();
         Set<ERParticipatingEntity> uniqueParticipatingEntities = new HashSet<ERParticipatingEntity>();
 
         for (EREntity entity : entities) {
             if (StringUtils.isBlank(entity.getUniqueName())) {
-                throw new ERSchemaException("Every EREntity must have a name.");
+                throw new ERException("Every EREntity must have a name.");
             }
 
             if (uniqueEntities.contains(entity)) {
-                throw new ERSchemaException(entity + " is a duplicate.");
+                throw new ERException(entity + " is a duplicate.");
             } else {
                 uniqueEntities.add(entity);
             }
@@ -141,40 +141,40 @@ public class ERSchema {
 
         for (ERRelationship relationship : relationships) {
             if (StringUtils.isBlank(relationship.getUniqueName())) {
-                throw new ERSchemaException("Every ERRelationship must have a name.");
+                throw new ERException("Every ERRelationship must have a name.");
             }
 
             if (uniqueRelationships.contains(relationship)) {
-                throw new ERSchemaException(relationship + " is a duplicate.");
+                throw new ERException(relationship + " is a duplicate.");
             } else {
                 uniqueRelationships.add(relationship);
             }
 
             if (relationship.getParticipatingEntities().size() < 2) {
-                throw new ERSchemaException(relationship
+                throw new ERException(relationship
                     + " must have at least 2 ERParticipatingEntities.");
             }
 
             if (relationship.getParticipatingEntities().size() > 3) {
-                throw new ERSchemaException(relationship
+                throw new ERException(relationship
                     + " cannot have more than 3 ERParticipatingEntities.");
             }
 
             for (ERParticipatingEntity participatingEntity : relationship.getParticipatingEntities()) {
                 if (StringUtils.isBlank(participatingEntity.getUniqueName())) {
-                    throw new ERSchemaException(
+                    throw new ERException(
                         "Every ERParticipatingEntity must have a name.");
                 }
 
                 if (uniqueParticipatingEntities.contains(participatingEntity)) {
-                    throw new ERSchemaException(participatingEntity
+                    throw new ERException(participatingEntity
                         + " in " + relationship + " is a duplicate.");
                 } else {
                     uniqueParticipatingEntities.add(participatingEntity);
                 }
 
                 if (getEntity(participatingEntity) == null) {
-                    throw new ERSchemaException(participatingEntity
+                    throw new ERException(participatingEntity
                         + " in " + relationship
                         + " refers to EREntity(" + participatingEntity.getUniqueName() + ")"
                         + " which does not exist.");
@@ -183,7 +183,7 @@ public class ERSchema {
 
             if (relationship.isIdentifying()) {
                 if (!relationship.isBinary()) {
-                    throw new ERSchemaException("Identifying " + relationship
+                    throw new ERException("Identifying " + relationship
                         + " must have exactly 2 ERParticipatingEntities.");
                 }
 
@@ -195,13 +195,13 @@ public class ERSchema {
                 if (!((aEntity.isStrong() && bEntity.isWeak())
                     || (aEntity.isWeak() && bEntity.isStrong()))
                 ) {
-                    throw new ERSchemaException("Identifying " + relationship
+                    throw new ERException("Identifying " + relationship
                         + " must have 1 strong ERParticipatingEntity"
                         + " and 1 weak ERParticipatingEntity.");
                 }
 
                 if (!relationship.getAttributes().isEmpty()) {
-                    throw new ERSchemaException("Identifying " + relationship
+                    throw new ERException("Identifying " + relationship
                         + " cannot have attributes.");
                 }
             }
@@ -209,7 +209,7 @@ public class ERSchema {
 
         for (EREntity weakEntity : getWeakEntities()) {
             if (getIdentifyingBinaryRelationship(weakEntity) == null) {
-                throw new ERSchemaException("Weak " + weakEntity
+                throw new ERException("Weak " + weakEntity
                     + " must have exactly 1 identifying binary ERRelationship with a strong EREntity.");
             }
         }
@@ -227,24 +227,24 @@ public class ERSchema {
 
         for (ERAttribute attribute : attributes) {
             if (StringUtils.isBlank(attribute.getUniqueName())) {
-                throw new ERSchemaException("Every ERAttribute must have a name.");
+                throw new ERException("Every ERAttribute must have a name.");
             }
 
             if (uniqueAttributes.contains(attribute)) {
-                throw new ERSchemaException(attribute + " is a duplicate.");
+                throw new ERException(attribute + " is a duplicate.");
             } else {
                 uniqueAttributes.add(attribute);
             }
 
             if (attribute.isKey() && attribute.isMultivalued()) {
-                throw new ERSchemaException("Key " + attribute
+                throw new ERException("Key " + attribute
                     + " cannot be multivalued.");
             }
 
             if (attribute.isComposite()) {
                 for (EREntity entity : uniqueEntities) {
                     if (entity.getUniqueName().equals(attribute.getUniqueName())) {
-                        throw new ERSchemaException("Composite " + attribute
+                        throw new ERException("Composite " + attribute
                             + " cannot have the same name as " + entity + ".");
                     }
                 }
@@ -252,22 +252,22 @@ public class ERSchema {
 
             for (ERAttribute componentAttribute : attribute.getComponentAttributes()) {
                 if (StringUtils.isBlank(componentAttribute.getUniqueName())) {
-                    throw new ERSchemaException("Every ERAttribute must have a name.");
+                    throw new ERException("Every ERAttribute must have a name.");
                 }
 
                 if (uniqueAttributes.contains(componentAttribute)) {
-                    throw new ERSchemaException(componentAttribute + " is a duplicate.");
+                    throw new ERException(componentAttribute + " is a duplicate.");
                 } else {
                     uniqueAttributes.add(componentAttribute);
                 }
 
                 if (componentAttribute.isKey()) {
-                    throw new ERSchemaException("Component " + attribute
+                    throw new ERException("Component " + attribute
                         + " cannot be a key.");
                 }
 
                 if (componentAttribute.isComposite()) {
-                    throw new ERSchemaException("Component " + attribute
+                    throw new ERException("Component " + attribute
                         + " cannot be composite.");
                 }
             }

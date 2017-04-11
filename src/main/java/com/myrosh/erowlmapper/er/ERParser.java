@@ -8,7 +8,7 @@ import java.io.Reader;
  * A generic ER schema parser contract
  *
  */
-public interface ERSchemaParser {
+public interface ERParser {
 
     /**
      * @param reader

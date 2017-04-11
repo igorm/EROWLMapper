@@ -5,12 +5,12 @@ package com.myrosh.erowlmapper.er;
  *
  * @author igorm
  */
-public class ERSchemaException extends Exception {
+public class ERException extends Exception {
 
     /**
      * @param message
      */
-    public ERSchemaException(String message) {
+    public ERException(String message) {
         super("ER Schema Error: " + message);
     }
 }
