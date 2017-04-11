@@ -4,7 +4,7 @@ EROWLMapper illustrates an approach to automatically mapping
 [ER schemas](http://myrosh.com/er-model-overview) to
 [OWL ontologies](http://myrosh.com/owl-web-ontology-language-overview)
 presented in [I. Myroshnichenko and M. Murphy, Mapping ER Schemas to OWL Ontologies, IEEE Sixth International Conference on Semantic Computing, Berkeley, CA, 2009](https://www.computer.org/csdl/proceedings/icsc/2009/3800/00/3800a324-abs.html).
-The mapping logic is located in the [Mapper](src/main/java/com/myrosh/erowl/Mapper.java) class.
+The mapping logic is located in the [Mapper](src/main/java/com/myrosh/erowlmapper/EROWLMapper.java) class.
 
 ### Input
 
