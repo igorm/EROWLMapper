@@ -9,7 +9,7 @@ entities:
             -
                 name: name
                 composite: true
-                componentAttributes:
+                attributes:
                     -
                         name: first
                     -

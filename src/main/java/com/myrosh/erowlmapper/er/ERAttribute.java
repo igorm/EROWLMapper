@@ -9,7 +9,7 @@ import java.util.List;
  * Models an ER entity/relationship/component attribute
  *
  */
-public class ERAttribute extends ERElement {
+public class ERAttribute extends ERElementWithAttributes {
 
     /**
      * Key flag
@@ -25,11 +25,6 @@ public class ERAttribute extends ERElement {
      * Multivalued flag
      */
     private boolean multivalued = false;
-
-    /**
-     * Component attribute objects
-     */
-    private List<ERAttribute> componentAttributes = new ArrayList<ERAttribute>();
 
     /**
      * @return
@@ -71,19 +66,5 @@ public class ERAttribute extends ERElement {
      */
     public void setMultivalued(boolean multivalued) {
         this.multivalued = multivalued;
-    }
-
-    /**
-     * @return
-     */
-    public List<ERAttribute> getComponentAttributes() {
-        return componentAttributes;
-    }
-
-    /**
-     * @param attribute
-     */
-    public void addComponentAttribute(ERAttribute attribute) {
-        componentAttributes.add(attribute);
     }
 }

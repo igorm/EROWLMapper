@@ -111,7 +111,7 @@ public class ERParticipatingEntity extends ERElement {
 
     @Override
     public String toString() {
-        return getClass().getSimpleName() + "(" + getUniqueName()
-            + (StringUtils.isBlank(role) ? "" : "/" + getUniqueRole()) + ")";
+        return getClass().getSimpleName() + "{" + getUniqueName()
+            + (StringUtils.isBlank(role) ? "" : "/" + getUniqueRole()) + "}";
     }
 }

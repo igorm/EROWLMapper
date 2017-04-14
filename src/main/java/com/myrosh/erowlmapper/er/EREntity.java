@@ -9,17 +9,12 @@ import java.util.List;
  * Models an ER entity
  *
  */
-public class EREntity extends ERElement {
+public class EREntity extends ERElementWithAttributes {
 
     /**
      * Weak flag
      */
     private boolean weak = false;
-
-    /**
-     * ERAttribute objects
-     */
-    private List<ERAttribute> attributes = new ArrayList<ERAttribute>();
 
     /**
      * @return
@@ -45,17 +40,10 @@ public class EREntity extends ERElement {
     /**
      * @return
      */
-    public List<ERAttribute> getAttributes() {
-        return attributes;
-    }
-
-    /**
-     * @return
-     */
     public List<ERAttribute> getKeyAttributes() {
         List<ERAttribute> keyAttributes = new ArrayList<ERAttribute>();
 
-        for (ERAttribute attribute : attributes) {
+        for (ERAttribute attribute : getAttributes()) {
             if (attribute.isKey()) {
                 keyAttributes.add(attribute);
             }
@@ -70,19 +58,12 @@ public class EREntity extends ERElement {
     public List<ERAttribute> getNonKeyAttributes() {
         List<ERAttribute> nonKeyAttributes = new ArrayList<ERAttribute>();
 
-        for (ERAttribute attribute : attributes) {
+        for (ERAttribute attribute : getAttributes()) {
             if (!attribute.isKey()) {
                 nonKeyAttributes.add(attribute);
             }
         }
 
         return nonKeyAttributes;
-    }
-
-    /**
-     * @param attribute
-     */
-    public void addAttribute(ERAttribute attribute) {
-        attributes.add(attribute);
     }
 }

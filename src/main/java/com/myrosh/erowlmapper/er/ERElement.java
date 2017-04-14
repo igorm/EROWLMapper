@@ -64,6 +64,6 @@ public abstract class ERElement {
 
     @Override
     public String toString() {
-        return getClass().getSimpleName() + "(" + getUniqueName() + ")";
+        return getClass().getSimpleName() + "{" + getUniqueName() + "}";
     }
 }

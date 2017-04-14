@@ -9,7 +9,7 @@ import java.util.List;
  * Models an ER relationship
  *
  */
-public class ERRelationship extends ERElement {
+public class ERRelationship extends ERElementWithAttributes {
 
     /**
      * Identifying flag
@@ -17,14 +17,9 @@ public class ERRelationship extends ERElement {
     private boolean identifying = false;
 
     /**
-     * Participating entity objects
+     * Participating entities
      */
     private List<ERParticipatingEntity> participatingEntities = new ArrayList<ERParticipatingEntity>();
-
-    /**
-     * ERAttribute objects
-     */
-    private List<ERAttribute> attributes = new ArrayList<ERAttribute>();
 
     /**
      * @return
@@ -103,19 +98,5 @@ public class ERRelationship extends ERElement {
      */
     public boolean isNary() {
         return participatingEntities.size() > 3;
-    }
-
-    /**
-     * @return
-     */
-    public List<ERAttribute> getAttributes() {
-        return attributes;
-    }
-
-    /**
-     * @param attribute
-     */
-    public void addAttribute(ERAttribute attribute) {
-        attributes.add(attribute);
     }
 }

@@ -162,21 +162,19 @@ public class ERSchema {
 
             for (ERParticipatingEntity participatingEntity : relationship.getParticipatingEntities()) {
                 if (StringUtils.isBlank(participatingEntity.getUniqueName())) {
-                    throw new ERException(
-                        "Every ERParticipatingEntity must have a name.");
+                    throw new ERException("Every ERParticipatingEntity must have a name.");
                 }
 
                 if (uniqueParticipatingEntities.contains(participatingEntity)) {
-                    throw new ERException(participatingEntity
-                        + " in " + relationship + " is a duplicate.");
+                    throw new ERException(participatingEntity + " in " + relationship
+                        + " is a duplicate.");
                 } else {
                     uniqueParticipatingEntities.add(participatingEntity);
                 }
 
                 if (getEntity(participatingEntity) == null) {
-                    throw new ERException(participatingEntity
-                        + " in " + relationship
-                        + " refers to EREntity(" + participatingEntity.getUniqueName() + ")"
+                    throw new ERException(participatingEntity + " in " + relationship
+                        + " refers to EREntity{" + participatingEntity.getUniqueName() + "}"
                         + " which does not exist.");
                 }
             }
@@ -209,66 +207,63 @@ public class ERSchema {
 
         for (EREntity weakEntity : getWeakEntities()) {
             if (getIdentifyingBinaryRelationship(weakEntity) == null) {
-                throw new ERException("Weak " + weakEntity
-                    + " must have exactly 1 identifying binary ERRelationship with a strong EREntity.");
+                throw new ERException("Weak " + weakEntity + " must have exactly 1 identifying"
+                    + " binary ERRelationship with a strong EREntity.");
             }
         }
 
-        List<ERAttribute> attributes = new ArrayList<ERAttribute>();
+        List<ERElementWithAttributes> elementsWithAttributes =
+            new ArrayList<ERElementWithAttributes>();
+        elementsWithAttributes.addAll(entities);
+        elementsWithAttributes.addAll(relationships);
+
         Set<ERAttribute> uniqueAttributes = new HashSet<ERAttribute>();
 
-        for (EREntity entity : entities) {
-            attributes.addAll(entity.getAttributes());
-        }
-
-        for (ERRelationship relationship : relationships) {
-            attributes.addAll(relationship.getAttributes());
-        }
-
-        for (ERAttribute attribute : attributes) {
-            if (StringUtils.isBlank(attribute.getUniqueName())) {
-                throw new ERException("Every ERAttribute must have a name.");
-            }
-
-            if (uniqueAttributes.contains(attribute)) {
-                throw new ERException(attribute + " is a duplicate.");
-            } else {
-                uniqueAttributes.add(attribute);
-            }
-
-            if (attribute.isKey() && attribute.isMultivalued()) {
-                throw new ERException("Key " + attribute
-                    + " cannot be multivalued.");
-            }
-
-            if (attribute.isComposite()) {
-                for (EREntity entity : uniqueEntities) {
-                    if (entity.getUniqueName().equals(attribute.getUniqueName())) {
-                        throw new ERException("Composite " + attribute
-                            + " cannot have the same name as " + entity + ".");
-                    }
-                }
-            }
-
-            for (ERAttribute componentAttribute : attribute.getComponentAttributes()) {
-                if (StringUtils.isBlank(componentAttribute.getUniqueName())) {
+        for (ERElementWithAttributes element : elementsWithAttributes) {
+            for (ERAttribute attribute : element.getAttributes()) {
+                if (StringUtils.isBlank(attribute.getUniqueName())) {
                     throw new ERException("Every ERAttribute must have a name.");
                 }
 
-                if (uniqueAttributes.contains(componentAttribute)) {
-                    throw new ERException(componentAttribute + " is a duplicate.");
+                if (uniqueAttributes.contains(attribute)) {
+                    throw new ERException(attribute + " is a duplicate.");
                 } else {
-                    uniqueAttributes.add(componentAttribute);
+                    uniqueAttributes.add(attribute);
                 }
 
-                if (componentAttribute.isKey()) {
-                    throw new ERException("Component " + attribute
-                        + " cannot be a key.");
+                if (attribute.isKey() && attribute.isMultivalued()) {
+                    throw new ERException("Key " + attribute + " cannot be multivalued.");
                 }
 
-                if (componentAttribute.isComposite()) {
-                    throw new ERException("Component " + attribute
-                        + " cannot be composite.");
+                if (attribute.isComposite()) {
+                    for (EREntity entity : uniqueEntities) {
+                        if (entity.getUniqueName().equals(attribute.getUniqueName())) {
+                            throw new ERException("Composite " + attribute
+                                + " cannot have the same name as " + entity + ".");
+                        }
+                    }
+                }
+
+                for (ERAttribute componentAttribute : attribute.getAttributes()) {
+                    if (StringUtils.isBlank(componentAttribute.getUniqueName())) {
+                        throw new ERException("Every ERAttribute must have a name.");
+                    }
+
+                    if (uniqueAttributes.contains(componentAttribute)) {
+                        throw new ERException(componentAttribute + " is a duplicate.");
+                    } else {
+                        uniqueAttributes.add(componentAttribute);
+                    }
+
+                    if (componentAttribute.isKey()) {
+                        throw new ERException("Component " + componentAttribute
+                            + " cannot be a key.");
+                    }
+
+                    if (componentAttribute.isComposite()) {
+                        throw new ERException("Component " + componentAttribute
+                            + " cannot be composite.");
+                    }
                 }
             }
         }

@@ -207,7 +207,7 @@ public class EROWLMapper {
                 // Map the single composite key attribute
                 OntClass keyClass = ontology.addOWLKeyClass(entityClass);
 
-                for (ERAttribute attribute : keyAttribute.getComponentAttributes()) {
+                for (ERAttribute attribute : keyAttribute.getAttributes()) {
                     ontology.addOWLDatatypeProperty(
                         attribute.getName(),
                         keyClass,
@@ -250,7 +250,7 @@ public class EROWLMapper {
                     true
                 );
 
-                for (ERAttribute attribute : nonKeyAttribute.getComponentAttributes()) {
+                for (ERAttribute attribute : nonKeyAttribute.getAttributes()) {
                     ontology.addOWLDatatypeProperty(
                         attribute.getName(),
                         compositeAttributeClass,
