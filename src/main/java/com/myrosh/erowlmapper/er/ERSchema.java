@@ -118,6 +118,74 @@ public class ERSchema {
     }
 
     /**
+     * @param relationshipName
+     * @param participatingEntityNames
+     * @param attributeNames
+     * @return
+     */
+    public ERRelationship addRelationshipAndParticipatingEntitiesAndAttributes(
+        String relationshipName,
+        List<String> participatingEntityNames,
+        List<String> attributeNames
+    ) {
+        if (participatingEntityNames == null) {
+            participatingEntityNames = new ArrayList<String>();
+        }
+
+        if (attributeNames == null) {
+            attributeNames = new ArrayList<String>();
+        }
+
+        ERRelationship relationship = new ERRelationship();
+        relationship.setName(relationshipName);
+
+        for (String attributeName : attributeNames) {
+            ERAttribute attribute = new ERAttribute();
+            attribute.setName(attributeName);
+
+            relationship.addAttribute(attribute);
+        }
+
+        for (String participatingEntityName : participatingEntityNames) {
+            addEntityAndAttributes(participatingEntityName, null);
+
+            ERParticipatingEntity participatingEntity = new ERParticipatingEntity();
+            participatingEntity.setName(participatingEntityName);
+
+            relationship.addParticipatingEntity(participatingEntity);
+        }
+
+        addRelationship(relationship);
+
+        return relationship;
+    }
+
+    /**
+     * @param entityName
+     * @param attributeNames
+     * @return
+     */
+    public EREntity addEntityAndAttributes(String entityName, List<String> attributeNames) {
+        if (attributeNames == null) {
+            attributeNames = new ArrayList<String>();
+        }
+
+        EREntity entity = new EREntity();
+        entity.setName(entityName);
+
+        for (String attributeName : attributeNames) {
+            ERAttribute attribute = new ERAttribute();
+            attribute.setName(attributeName);
+
+            entity.addAttribute(attribute);
+        }
+
+        addEntity(entity);
+
+        return entity;
+    }
+
+    /**
      * @throws ERException
      *
      * Checks for schema inconsistencies.
