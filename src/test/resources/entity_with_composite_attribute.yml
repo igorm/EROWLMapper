@@ -1,0 +1,11 @@
+--- # testMapEntityWithCompositeAttribute
+entities:
+    -
+        name: EntityA
+        attributes:
+            -
+                name: attributeA
+                composite: true
+                attributes:
+                    -
+                        name: attributeB

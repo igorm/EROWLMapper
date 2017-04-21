@@ -1,0 +1,7 @@
+--- # testMapEntityWithSimpleAttribute
+entities:
+    -
+        name: EntityA
+        attributes:
+            -
+                name: attributeA

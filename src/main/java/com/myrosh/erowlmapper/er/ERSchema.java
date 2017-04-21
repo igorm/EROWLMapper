@@ -123,7 +123,7 @@ public class ERSchema {
      * @param attributeNames
      * @return
      */
-    public ERRelationship addRelationshipAndParticipatingEntitiesAndAttributes(
+    public ERRelationship addRelationshipWithParticipatingEntitiesAndAttributes(
         String relationshipName,
         List<String> participatingEntityNames,
         List<String> attributeNames
@@ -147,7 +147,7 @@ public class ERSchema {
         }
 
         for (String participatingEntityName : participatingEntityNames) {
-            addEntityAndAttributes(participatingEntityName, null);
+            addEntityWithAttributes(participatingEntityName, null);
 
             ERParticipatingEntity participatingEntity = new ERParticipatingEntity();
             participatingEntity.setName(participatingEntityName);
@@ -165,7 +165,7 @@ public class ERSchema {
      * @param attributeNames
      * @return
      */
-    public EREntity addEntityAndAttributes(String entityName, List<String> attributeNames) {
+    public EREntity addEntityWithAttributes(String entityName, List<String> attributeNames) {
         if (attributeNames == null) {
             attributeNames = new ArrayList<String>();
         }

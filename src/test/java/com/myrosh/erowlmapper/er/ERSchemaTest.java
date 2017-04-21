@@ -20,7 +20,7 @@ public class ERSchemaTest
     public void testEntityWithoutName() throws ERException {
         ERSchema schema = new ERSchema();
 
-        schema.addEntityAndAttributes("", null);
+        schema.addEntityWithAttributes("", null);
 
         exception.expect(ERException.class);
         exception.expectMessage("Every EREntity must have a name.");
@@ -30,8 +30,8 @@ public class ERSchemaTest
     @Test
     public void testEntityWithDuplicateName() throws ERException {
         ERSchema schema = new ERSchema();
-        EREntity entityA = schema.addEntityAndAttributes("EntityA", null);
-        EREntity entityB = schema.addEntityAndAttributes("entity a", null);
+        EREntity entityA = schema.addEntityWithAttributes("EntityA", null);
+        EREntity entityB = schema.addEntityWithAttributes("entity a", null);
 
         exception.expect(ERException.class);
         exception.expectMessage(entityB + " is a duplicate.");
@@ -42,7 +42,7 @@ public class ERSchemaTest
     public void testRelationshipWithoutName() throws ERException {
         ERSchema schema = new ERSchema();
 
-        schema.addRelationshipAndParticipatingEntitiesAndAttributes("", null, null);
+        schema.addRelationshipWithParticipatingEntitiesAndAttributes("", null, null);
 
         exception.expect(ERException.class);
         exception.expectMessage("Every ERRelationship must have a name.");
@@ -52,9 +52,9 @@ public class ERSchemaTest
     @Test
     public void testRelationshipWithDuplicateName() throws ERException {
         ERSchema schema = new ERSchema();
-        ERRelationship relationshipA = schema.addRelationshipAndParticipatingEntitiesAndAttributes(
+        ERRelationship relationshipA = schema.addRelationshipWithParticipatingEntitiesAndAttributes(
             "RelationshipA", Arrays.asList("EntityA", "EntityB"), null);
-        ERRelationship relationshipB = schema.addRelationshipAndParticipatingEntitiesAndAttributes(
+        ERRelationship relationshipB = schema.addRelationshipWithParticipatingEntitiesAndAttributes(
             "relationship a", Arrays.asList("EntityC", "EntityD"), null);
 
         exception.expect(ERException.class);
@@ -65,7 +65,7 @@ public class ERSchemaTest
     @Test
     public void testRelationshipWithOneParticipatingEntity() throws ERException {
         ERSchema schema = new ERSchema();
-        ERRelationship relationship = schema.addRelationshipAndParticipatingEntitiesAndAttributes(
+        ERRelationship relationship = schema.addRelationshipWithParticipatingEntitiesAndAttributes(
             "RelationshipA", Arrays.asList("EntityA"), null);
 
         exception.expect(ERException.class);
@@ -76,7 +76,7 @@ public class ERSchemaTest
     @Test
     public void testRelationshipWithFourParticipatingEntity() throws ERException {
         ERSchema schema = new ERSchema();
-        ERRelationship relationship = schema.addRelationshipAndParticipatingEntitiesAndAttributes(
+        ERRelationship relationship = schema.addRelationshipWithParticipatingEntitiesAndAttributes(
             "RelationshipA", Arrays.asList("EntityA", "EntityB", "EntityC", "EntityD"), null);
 
         exception.expect(ERException.class);
@@ -87,7 +87,7 @@ public class ERSchemaTest
     @Test
     public void testParticipatingEntityWithoutName() throws ERException {
         ERSchema schema = new ERSchema();
-        ERRelationship relationship = schema.addRelationshipAndParticipatingEntitiesAndAttributes(
+        ERRelationship relationship = schema.addRelationshipWithParticipatingEntitiesAndAttributes(
             "RelationshipA", Arrays.asList("EntityA", "EntityB"), null);
         ERParticipatingEntity participatingEntity = relationship.getParticipatingEntities().get(0);
         participatingEntity.setName("");
@@ -100,9 +100,9 @@ public class ERSchemaTest
     @Test
     public void testParticipatingEntityWithDuplicateName() throws ERException {
         ERSchema schema = new ERSchema();
-        ERRelationship relationshipA = schema.addRelationshipAndParticipatingEntitiesAndAttributes(
+        ERRelationship relationshipA = schema.addRelationshipWithParticipatingEntitiesAndAttributes(
             "RelationshipA", Arrays.asList("EntityA", "EntityB"), null);
-        ERRelationship relationshipB = schema.addRelationshipAndParticipatingEntitiesAndAttributes(
+        ERRelationship relationshipB = schema.addRelationshipWithParticipatingEntitiesAndAttributes(
             "RelationshipB", Arrays.asList("EntityC", "EntityD"), null);
         ERParticipatingEntity participatingEntity = relationshipB.getParticipatingEntities().get(0);
         participatingEntity.setName("EntityA");
@@ -115,9 +115,9 @@ public class ERSchemaTest
     @Test
     public void testParticipatingEntityWithInvalidName() throws ERException {
         ERSchema schema = new ERSchema();
-        ERRelationship relationshipA = schema.addRelationshipAndParticipatingEntitiesAndAttributes(
+        ERRelationship relationshipA = schema.addRelationshipWithParticipatingEntitiesAndAttributes(
             "RelationshipA", Arrays.asList("EntityA", "EntityB"), null);
-        ERRelationship relationshipB = schema.addRelationshipAndParticipatingEntitiesAndAttributes(
+        ERRelationship relationshipB = schema.addRelationshipWithParticipatingEntitiesAndAttributes(
             "RelationshipB", Arrays.asList("EntityC", "EntityD"), null);
         ERParticipatingEntity participatingEntity = relationshipB.getParticipatingEntities().get(0);
         participatingEntity.setName("EntityE");
@@ -132,7 +132,7 @@ public class ERSchemaTest
     @Test
     public void testTernaryIdentifyingRelationship() throws ERException {
         ERSchema schema = new ERSchema();
-        ERRelationship relationship = schema.addRelationshipAndParticipatingEntitiesAndAttributes(
+        ERRelationship relationship = schema.addRelationshipWithParticipatingEntitiesAndAttributes(
             "RelationshipA", Arrays.asList("EntityA", "EntityB", "EntityC"), null);
         relationship.setIdentifying(true);
 
@@ -145,7 +145,7 @@ public class ERSchemaTest
     @Test
     public void testIdentifyingRelationshipWithoutWeakEntity() throws ERException {
         ERSchema schema = new ERSchema();
-        ERRelationship relationship = schema.addRelationshipAndParticipatingEntitiesAndAttributes(
+        ERRelationship relationship = schema.addRelationshipWithParticipatingEntitiesAndAttributes(
             "RelationshipA", Arrays.asList("EntityA", "EntityB"), null);
         relationship.setIdentifying(true);
 
@@ -159,7 +159,7 @@ public class ERSchemaTest
     @Test
     public void testIdentifyingRelationshipWithAttributes() throws ERException {
         ERSchema schema = new ERSchema();
-        ERRelationship relationship = schema.addRelationshipAndParticipatingEntitiesAndAttributes(
+        ERRelationship relationship = schema.addRelationshipWithParticipatingEntitiesAndAttributes(
             "RelationshipA", Arrays.asList("EntityA", "EntityB"), Arrays.asList("attributeA"));
         relationship.setIdentifying(true);
         schema.getEntities().get(0).setWeak(true);
@@ -172,13 +172,13 @@ public class ERSchemaTest
     @Test
     public void testWeakEntityWithTwoIdentifyingRelationships() throws ERException {
         ERSchema schema = new ERSchema();
-        ERRelationship relationshipA = schema.addRelationshipAndParticipatingEntitiesAndAttributes(
+        ERRelationship relationshipA = schema.addRelationshipWithParticipatingEntitiesAndAttributes(
             "RelationshipA", Arrays.asList("EntityA", "EntityB"), null);
         relationshipA.setIdentifying(true);
         EREntity weakEntity = schema.getEntities().get(0);
         weakEntity.setWeak(true);
 
-        ERRelationship relationshipB = schema.addRelationshipAndParticipatingEntitiesAndAttributes(
+        ERRelationship relationshipB = schema.addRelationshipWithParticipatingEntitiesAndAttributes(
             "RelationshipB", Arrays.asList("EntityC", "EntityD"), null);
         relationshipB.setIdentifying(true);
         ERParticipatingEntity participatingEntity = relationshipB.getParticipatingEntities().get(0);
@@ -195,7 +195,7 @@ public class ERSchemaTest
     public void testAttributeWithoutName() throws ERException {
         ERSchema schema = new ERSchema();
 
-        schema.addEntityAndAttributes("EntityA", Arrays.asList(""));
+        schema.addEntityWithAttributes("EntityA", Arrays.asList(""));
 
         exception.expect(ERException.class);
         exception.expectMessage("Every ERAttribute must have a name.");
@@ -205,7 +205,7 @@ public class ERSchemaTest
     @Test
     public void testAttributeWithDuplicateName() throws ERException {
         ERSchema schema = new ERSchema();
-        EREntity entity = schema.addEntityAndAttributes(
+        EREntity entity = schema.addEntityWithAttributes(
             "EntityA", Arrays.asList("attributeA", "attribute a"));
         ERAttribute attribute = entity.getAttributes().get(0);
 
@@ -217,7 +217,7 @@ public class ERSchemaTest
     @Test
     public void testMultivaluedKeyAttribute() throws ERException {
         ERSchema schema = new ERSchema();
-        EREntity entity = schema.addEntityAndAttributes("EntityA", Arrays.asList("attributeA"));
+        EREntity entity = schema.addEntityWithAttributes("EntityA", Arrays.asList("attributeA"));
         ERAttribute attribute = entity.getAttributes().get(0);
         attribute.setKey(true);
         attribute.setMultivalued(true);
@@ -230,7 +230,7 @@ public class ERSchemaTest
     @Test
     public void testCompositeAttributeWithDuplicateName() throws ERException {
         ERSchema schema = new ERSchema();
-        EREntity entity = schema.addEntityAndAttributes("EntityA", Arrays.asList("entity a"));
+        EREntity entity = schema.addEntityWithAttributes("EntityA", Arrays.asList("entity a"));
         ERAttribute attribute = entity.getAttributes().get(0);
         attribute.setComposite(true);
 
@@ -243,7 +243,7 @@ public class ERSchemaTest
     @Test
     public void testComponentAttributeWithoutName() throws ERException {
         ERSchema schema = new ERSchema();
-        EREntity entity = schema.addEntityAndAttributes("EntityA", Arrays.asList("attributeA"));
+        EREntity entity = schema.addEntityWithAttributes("EntityA", Arrays.asList("attributeA"));
         ERAttribute attribute = entity.getAttributes().get(0);
         attribute.setComposite(true);
         attribute.addAttribute(new ERAttribute());
@@ -256,7 +256,7 @@ public class ERSchemaTest
     @Test
     public void testComponentAttributeWithDuplicateName() throws ERException {
         ERSchema schema = new ERSchema();
-        EREntity entity = schema.addEntityAndAttributes("EntityA", Arrays.asList("attributeA"));
+        EREntity entity = schema.addEntityWithAttributes("EntityA", Arrays.asList("attributeA"));
         ERAttribute attribute = entity.getAttributes().get(0);
         attribute.setComposite(true);
 
@@ -272,7 +272,7 @@ public class ERSchemaTest
     @Test
     public void testKeyComponentAttribute() throws ERException {
         ERSchema schema = new ERSchema();
-        EREntity entity = schema.addEntityAndAttributes("EntityA", Arrays.asList("attributeA"));
+        EREntity entity = schema.addEntityWithAttributes("EntityA", Arrays.asList("attributeA"));
         ERAttribute attribute = entity.getAttributes().get(0);
         attribute.setComposite(true);
 
@@ -289,7 +289,7 @@ public class ERSchemaTest
     @Test
     public void testCompositeComponentAttribute() throws ERException {
         ERSchema schema = new ERSchema();
-        EREntity entity = schema.addEntityAndAttributes("EntityA", Arrays.asList("attributeA"));
+        EREntity entity = schema.addEntityWithAttributes("EntityA", Arrays.asList("attributeA"));
         ERAttribute attribute = entity.getAttributes().get(0);
         attribute.setComposite(true);
 

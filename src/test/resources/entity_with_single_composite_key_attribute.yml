@@ -1,0 +1,12 @@
+--- # testMapEntityWithSingleCompositeKeyAttribute
+entities:
+    -
+        name: EntityA
+        attributes:
+            -
+                name: attributeA
+                key: true
+                composite: true
+                attributes:
+                    -
+                        name: attributeB

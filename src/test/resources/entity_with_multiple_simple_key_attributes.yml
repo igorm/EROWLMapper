@@ -1,0 +1,11 @@
+--- # testMapEntityWithMultipleSimpleKeyAttributes
+entities:
+    -
+        name: EntityA
+        attributes:
+            -
+                name: attributeA
+                key: true
+            -
+                name: attributeB
+                key: true
