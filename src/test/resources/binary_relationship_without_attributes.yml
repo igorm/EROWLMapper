@@ -1,0 +1,14 @@
+--- # testMapBinaryRelationshipsWithoutAttributes
+entities:
+    -
+        name: EntityA
+    -
+        name: EntityB
+relationships:
+    -
+        name: RelationshipA
+        participatingEntities:
+            -
+                name: EntityA
+            -
+                name: EntityB

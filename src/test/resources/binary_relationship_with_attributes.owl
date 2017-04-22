@@ -1,0 +1,59 @@
+<rdf:RDF
+    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+    xmlns:owl="http://www.w3.org/2002/07/owl#"
+    xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema#">
+  <owl:Class rdf:about="http://www.semanticweb.org/ontologies/erowlmapper#EntityAEntityB">
+    <rdfs:subClassOf>
+      <owl:Restriction>
+        <owl:minCardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#int"
+        >1</owl:minCardinality>
+        <owl:onProperty>
+          <owl:FunctionalProperty rdf:about="http://www.semanticweb.org/ontologies/erowlmapper#isEntityBEntityAEntityBOf"/>
+        </owl:onProperty>
+      </owl:Restriction>
+    </rdfs:subClassOf>
+    <rdfs:subClassOf>
+      <owl:Restriction>
+        <owl:minCardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#int"
+        >1</owl:minCardinality>
+        <owl:onProperty>
+          <owl:FunctionalProperty rdf:about="http://www.semanticweb.org/ontologies/erowlmapper#isEntityAEntityBOf"/>
+        </owl:onProperty>
+      </owl:Restriction>
+    </rdfs:subClassOf>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/ontologies/erowlmapper#EntityA"/>
+  <owl:Class rdf:about="http://www.semanticweb.org/ontologies/erowlmapper#EntityB"/>
+  <owl:FunctionalProperty rdf:about="http://www.semanticweb.org/ontologies/erowlmapper#isEntityBEntityAEntityBOf">
+    <owl:inverseOf>
+      <owl:InverseFunctionalProperty rdf:about="http://www.semanticweb.org/ontologies/erowlmapper#hasEntityBEntityAEntityB"/>
+    </owl:inverseOf>
+    <rdfs:range rdf:resource="http://www.semanticweb.org/ontologies/erowlmapper#EntityB"/>
+    <rdfs:domain rdf:resource="http://www.semanticweb.org/ontologies/erowlmapper#EntityAEntityB"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
+  </owl:FunctionalProperty>
+  <owl:FunctionalProperty rdf:about="http://www.semanticweb.org/ontologies/erowlmapper#hasAttributeA">
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    <rdfs:domain rdf:resource="http://www.semanticweb.org/ontologies/erowlmapper#EntityAEntityB"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
+  </owl:FunctionalProperty>
+  <owl:FunctionalProperty rdf:about="http://www.semanticweb.org/ontologies/erowlmapper#isEntityAEntityBOf">
+    <owl:inverseOf>
+      <owl:InverseFunctionalProperty rdf:about="http://www.semanticweb.org/ontologies/erowlmapper#hasEntityAEntityB"/>
+    </owl:inverseOf>
+    <rdfs:range rdf:resource="http://www.semanticweb.org/ontologies/erowlmapper#EntityA"/>
+    <rdfs:domain rdf:resource="http://www.semanticweb.org/ontologies/erowlmapper#EntityAEntityB"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
+  </owl:FunctionalProperty>
+  <owl:InverseFunctionalProperty rdf:about="http://www.semanticweb.org/ontologies/erowlmapper#hasEntityBEntityAEntityB">
+    <rdfs:range rdf:resource="http://www.semanticweb.org/ontologies/erowlmapper#EntityAEntityB"/>
+    <rdfs:domain rdf:resource="http://www.semanticweb.org/ontologies/erowlmapper#EntityB"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
+  </owl:InverseFunctionalProperty>
+  <owl:InverseFunctionalProperty rdf:about="http://www.semanticweb.org/ontologies/erowlmapper#hasEntityAEntityB">
+    <rdfs:range rdf:resource="http://www.semanticweb.org/ontologies/erowlmapper#EntityAEntityB"/>
+    <rdfs:domain rdf:resource="http://www.semanticweb.org/ontologies/erowlmapper#EntityA"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
+  </owl:InverseFunctionalProperty>
+</rdf:RDF>

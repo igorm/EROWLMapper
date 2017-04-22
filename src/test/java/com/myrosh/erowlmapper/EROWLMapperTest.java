@@ -46,6 +46,21 @@ public class EROWLMapperTest
         Assert.assertTrue(isMappedERMatchingOWL("entity_with_composite_attribute"));
     }
 
+    @Test
+    public void testMapWeakEntitiesAndIdentifyingRelationships() throws Exception {
+        Assert.assertTrue(isMappedERMatchingOWL("weak_entity"));
+    }
+
+    @Test
+    public void testMapBinaryRelationshipsWithoutAttributes() throws Exception {
+        Assert.assertTrue(isMappedERMatchingOWL("binary_relationship_without_attributes"));
+    }
+
+    @Test
+    public void testMapBinaryRelationshipsWithAttributes() throws Exception {
+        Assert.assertTrue(isMappedERMatchingOWL("binary_relationship_with_attributes"));
+    }
+
     private boolean isMappedERMatchingOWL(String baseFilename) throws Exception {
         ClassLoader classLoader = getClass().getClassLoader();
 

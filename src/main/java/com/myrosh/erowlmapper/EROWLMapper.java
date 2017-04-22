@@ -117,8 +117,7 @@ public class EROWLMapper {
 
                 OntClass relationshipClass = ontology.addOWLBClass(
                     aClass,
-                    aParticipatingEntity.getRoleOrName()
-                        + bParticipatingEntity.getRoleOrName(),
+                    aParticipatingEntity.getRoleOrName() + bParticipatingEntity.getRoleOrName(),
                     (aParticipatingEntity.getMax() == 1),
                     (aParticipatingEntity.getMin() == 1),
                     true,
@@ -135,7 +134,7 @@ public class EROWLMapper {
                 }
 
                 ontology.addOWLHasIsOfObjectProperties(
-                    relationshipClass.getLocalName(),
+                    bParticipatingEntity.getRoleOrName() + relationshipClass.getLocalName(),
                     bClass,
                     relationshipClass,
                     (bParticipatingEntity.getMax() == 1),

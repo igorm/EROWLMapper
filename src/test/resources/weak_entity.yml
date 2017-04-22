@@ -1,0 +1,16 @@
+--- # testMapWeakEntitiesAndIdentifyingRelationships
+entities:
+    -
+        name: EntityA
+    -
+        name: EntityB
+        weak: true
+relationships:
+    -
+        name: RelationshipA
+        identifying: true
+        participatingEntities:
+            -
+                name: EntityA
+            -
+                name: EntityB

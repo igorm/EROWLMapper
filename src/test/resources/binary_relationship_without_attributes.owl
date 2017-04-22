@@ -1,0 +1,17 @@
+<rdf:RDF
+    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+    xmlns:owl="http://www.w3.org/2002/07/owl#"
+    xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema#">
+  <owl:Class rdf:about="http://www.semanticweb.org/ontologies/erowlmapper#EntityA"/>
+  <owl:Class rdf:about="http://www.semanticweb.org/ontologies/erowlmapper#EntityB"/>
+  <owl:ObjectProperty rdf:about="http://www.semanticweb.org/ontologies/erowlmapper#hasEntityB">
+    <rdfs:range rdf:resource="http://www.semanticweb.org/ontologies/erowlmapper#EntityB"/>
+    <rdfs:domain rdf:resource="http://www.semanticweb.org/ontologies/erowlmapper#EntityA"/>
+  </owl:ObjectProperty>
+  <owl:ObjectProperty rdf:about="http://www.semanticweb.org/ontologies/erowlmapper#isEntityBOf">
+    <owl:inverseOf rdf:resource="http://www.semanticweb.org/ontologies/erowlmapper#hasEntityB"/>
+    <rdfs:range rdf:resource="http://www.semanticweb.org/ontologies/erowlmapper#EntityA"/>
+    <rdfs:domain rdf:resource="http://www.semanticweb.org/ontologies/erowlmapper#EntityB"/>
+  </owl:ObjectProperty>
+</rdf:RDF>
