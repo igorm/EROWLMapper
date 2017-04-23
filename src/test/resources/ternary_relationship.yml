@@ -1,0 +1,18 @@
+--- # testMapTernaryRelationships
+entities:
+    -
+        name: EntityA
+    -
+        name: EntityB
+    -
+        name: EntityC
+relationships:
+    -
+        name: RelationshipA
+        participatingEntities:
+            -
+                name: EntityA
+            -
+                name: EntityB
+            -
+                name: EntityC

@@ -61,6 +61,11 @@ public class EROWLMapperTest
         Assert.assertTrue(isMappedERMatchingOWL("binary_relationship_with_attributes"));
     }
 
+    @Test
+    public void testMapTernaryRelationships() throws Exception {
+        Assert.assertTrue(isMappedERMatchingOWL("ternary_relationship"));
+    }
+
     private boolean isMappedERMatchingOWL(String baseFilename) throws Exception {
         ClassLoader classLoader = getClass().getClassLoader();
 
